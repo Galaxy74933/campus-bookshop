@@ -367,6 +367,72 @@ input:focus {
     width: 260px;
 }
 
+/* 专业课程总览 */
+.academic-overview .overview-summary {
+    margin-top: 12px;
+    color: #51607a;
+}
+
+.academic-overview .overview-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+
+.academic-overview .search-form {
+    flex-wrap: wrap;
+}
+
+.academic-overview .search-form input {
+    max-width: 100%;
+}
+
+.academic-overview .overview-search-note {
+    margin: 12px 0;
+}
+
+.academic-overview .overview-table-wrap {
+    overflow-x: auto;
+    margin-top: 14px;
+}
+
+.academic-overview table {
+    min-width: 580px;
+}
+
+.academic-overview caption {
+    text-align: left;
+    font-weight: 600;
+    padding-bottom: 12px;
+}
+
+.academic-overview .overview-group {
+    border-top: 2px solid #dfe7f1;
+}
+
+.academic-overview .overview-major {
+    background: #eef4fc;
+    color: #1f3a5f;
+    font-size: 14px;
+    max-width: 240px;
+    overflow-wrap: anywhere;
+}
+
+.academic-overview td {
+    vertical-align: middle;
+    overflow-wrap: anywhere;
+}
+
+.academic-overview .overview-shared {
+    background: #edf2ff;
+    color: #3159a0;
+    margin-left: 8px;
+}
+
+.academic-overview .overview-unassigned {
+    margin-top: 28px;
+}
+
 /* 分页 */
 .pager {
     margin-top: 14px;

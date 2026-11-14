@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title th:text="${title}">网上购书系统</title>
-    <link th:href="@{/css/style.css(v='academic-1')}" rel="stylesheet">
+    <link th:href="@{/css/style.css(v='academic-2')}" rel="stylesheet">
 </head>
 <body>
 <nav th:fragment="breadcrumbs(entryLabel, entryUrl, currentLabel)" class="breadcrumbs" aria-label="当前位置">
@@ -64,6 +64,7 @@
     <a th:href="@{/admin/books}" th:classappend="${active == 'books'} ? 'active'">图书管理</a>
     <a th:href="@{/admin/majors}" th:classappend="${active == 'majors'} ? 'active'">专业管理</a>
     <a th:href="@{/admin/courses}" th:classappend="${active == 'courses'} ? 'active'">课程管理</a>
+    <a th:href="@{/admin/academic-overview}" th:classappend="${active == 'overview'} ? 'active'">专业课程总览</a>
     <span class="spacer"></span>
     <span class="nav-user" th:if="${loginUser != null}" th:text="'管理员：' + ${loginUser.username}"></span>
     <a th:href="@{/admin/logout}">退出登录</a>

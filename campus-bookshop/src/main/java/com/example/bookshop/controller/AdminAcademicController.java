@@ -12,6 +12,11 @@ import org.springframework.ui.Model;
 import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
+import java.util.ArrayList;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Locale;
+import java.util.Map;
 
 @Controller
 @RequestMapping("/admin")
@@ -21,8 +26,48 @@ public class AdminAcademicController {
 
     @GetMapping("/majors")
     public String majors(Model model) {
-        model.addAttribute("majors", academicService.majors());
+        List<Major> majors = academicService.majors();
+        model.addAttribute("majors", majors);
+        model.addAttribute("majorCourses", groupCourses(majors, academicService.courses()));
         return "admin/majors";
+    }
+
+    @GetMapping("/academic-overview")
+    public String overview(@RequestParam(defaultValue = "") String keyword, Model model) {
+        List<Major> majors = academicService.majors();
+        List<Course> courses = academicService.courses();
+        Map<Long, List<Course>> majorCourses = groupCourses(majors, courses);
+        String query = keyword.trim().toLowerCase(Locale.ROOT);
+        // Keep every course in a matching major so search never hides part of its curriculum.
+        List<Major> visibleMajors = majors.stream()
+                .filter(major -> matches(major.getName(), query)
+                        || majorCourses.get(major.getId()).stream().anyMatch(course -> matches(course.getName(), query)))
+                .toList();
+        List<Course> unassignedCourses = courses.stream()
+                .filter(course -> course.getMajors().isEmpty() && matches(course.getName(), query)).toList();
+        model.addAttribute("majors", visibleMajors);
+        model.addAttribute("majorCourses", majorCourses);
+        model.addAttribute("unassignedCourses", unassignedCourses);
+        model.addAttribute("keyword", keyword.trim());
+        model.addAttribute("majorCount", majors.size());
+        model.addAttribute("courseCount", courses.size());
+        return "admin/academic-overview";
+    }
+
+    private boolean matches(String name, String query) {
+        return name.toLowerCase(Locale.ROOT).contains(query);
+    }
+
+    private Map<Long, List<Course>> groupCourses(List<Major> majors, List<Course> courses) {
+        Map<Long, List<Course>> majorCourses = new LinkedHashMap<>();
+        for (Major major : majors) majorCourses.put(major.getId(), new ArrayList<>());
+        for (Course course : courses) {
+            for (Major major : course.getMajors()) {
+                List<Course> associatedCourses = majorCourses.get(major.getId());
+                if (associatedCourses != null) associatedCourses.add(course);
+            }
+        }
+        return majorCourses;
     }
 
     @GetMapping("/majors/add")

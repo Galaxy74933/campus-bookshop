@@ -11,10 +11,10 @@
         <div th:replace="~{fragments :: alert}"></div>
         <div class="toolbar"><a class="btn btn-success" th:href="@{/admin/courses/add}">+ 新增课程</a></div>
         <table class="list">
-            <thead><tr><th>ID</th><th>课程名称</th><th>所属专业</th><th>操作</th></tr></thead>
+            <thead><tr><th>序号</th><th>课程名称</th><th>所属专业</th><th>操作</th></tr></thead>
             <tbody>
-            <tr th:each="c : ${courses}">
-                <td th:text="${c.id}"></td><td th:text="${c.name}"></td>
+            <tr th:each="c, row : ${courses}">
+                <td th:text="${row.count}"></td><td th:text="${c.name}"></td>
                 <td>
                     <span th:if="${c.majors.isEmpty()}" class="form-help">暂未关联</span>
                     <span th:each="m, s : ${c.majors}" th:text="${m.name + (s.last ? '' : '、')}"></span>

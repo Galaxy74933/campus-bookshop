@@ -15,6 +15,9 @@
     <select id="findMajor" resultType="com.example.bookshop.entity.Major">
         SELECT id, name FROM t_major WHERE id = #{id}
     </select>
+    <select id="majorIdByName" resultType="long">
+        SELECT id FROM t_major WHERE name = #{name}
+    </select>
     <insert id="insertMajor" useGeneratedKeys="true" keyProperty="id">
         INSERT INTO t_major (name) VALUES (#{name})
     </insert>
@@ -34,6 +37,9 @@
     </select>
     <select id="findCourse" resultMap="courseWithMajors">
         <include refid="courseColumns"/> WHERE c.id = #{id} ORDER BY m.id
+    </select>
+    <select id="courseIdByName" resultType="long">
+        SELECT id FROM t_course WHERE name = #{name}
     </select>
     <insert id="insertCourse" useGeneratedKeys="true" keyProperty="id">
         INSERT INTO t_course (name) VALUES (#{name})

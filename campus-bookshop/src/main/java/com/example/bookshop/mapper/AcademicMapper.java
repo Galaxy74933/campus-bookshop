@@ -10,12 +10,14 @@ import java.util.List;
 public interface AcademicMapper {
     List<Major> listMajors();
     Major findMajor(@Param("id") Long id);
+    Long majorIdByName(@Param("name") String name);
     int insertMajor(Major major);
     int updateMajor(Major major);
     int deleteMajor(@Param("id") Long id);
     int majorReferenceCount(@Param("id") Long id);
     List<Course> listCourses();
     Course findCourse(@Param("id") Long id);
+    Long courseIdByName(@Param("name") String name);
     int insertCourse(Course course);
     int updateCourse(Course course);
     int deleteCourse(@Param("id") Long id);

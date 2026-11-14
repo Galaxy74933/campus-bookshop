@@ -40,6 +40,10 @@ public class AcademicService {
     public void saveMajor(Long id, MajorForm form) {
         String name = validateName(form.getName(), "专业");
         if (id != null) major(id);
+        Long existingId = mapper.majorIdByName(name);
+        if (existingId != null && !existingId.equals(id)) {
+            throw new BizException("专业名称已存在，请使用其他名称");
+        }
         Major major = new Major();
         major.setId(id);
         major.setName(name);
@@ -57,6 +61,10 @@ public class AcademicService {
         List<Long> majorIds = normalizedIds(form.getMajorIds());
         for (Long majorId : majorIds) major(majorId);
         if (id != null) course(id);
+        Long existingId = mapper.courseIdByName(name);
+        if (existingId != null && !existingId.equals(id)) {
+            throw new BizException("课程名称已存在，请使用其他名称");
+        }
         Course course = new Course();
         course.setId(id);
         course.setName(name);
