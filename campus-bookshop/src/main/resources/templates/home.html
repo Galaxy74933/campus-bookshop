@@ -1,0 +1,17 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments :: head('主界面 - 校园书店')}"></head>
+<body>
+<div class="auth-box card">
+    <nav th:replace="~{fragments :: breadcrumbs(null, null, null)}"></nav>
+    <h2>校园书店</h2>
+    <p class="sub">欢迎来到校园书店，请选择入口</p>
+    <div class="form-group">
+        <a class="btn btn-primary btn-block" th:href="@{/admin/entry}">管理员入口</a>
+    </div>
+    <div class="form-group">
+        <a class="btn btn-default btn-block" th:href="@{/reader/entry}">读者入口</a>
+    </div>
+</div>
+</body>
+</html>

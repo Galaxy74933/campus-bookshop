@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments :: head('读者注册 - 网上书城')}"></head>
+<body>
+<div class="auth-box card">
+    <nav th:replace="~{fragments :: breadcrumbs('读者入口', '/reader/entry', '注册')}"></nav>
+    <h2>读者注册</h2>
+    <p class="sub">创建读者账号，注册成功即赠送 1000 元购书款</p>
+    <div th:replace="~{fragments :: alert}"></div>
+    <form th:action="@{/register}" method="post">
+        <div class="form-group">
+            <label>用户名</label>
+            <input type="text" name="username" th:value="${username}" placeholder="请输入用户名" required>
+        </div>
+        <div class="form-group">
+            <label>密码</label>
+            <input type="password" name="password" placeholder="请输入密码" required>
+        </div>
+        <div class="form-group">
+            <label>确认密码</label>
+            <input type="password" name="confirmPassword" placeholder="请再次输入密码" required>
+        </div>
+        <button type="submit" class="btn btn-primary btn-block">注 册</button>
+    </form>
+    <p class="foot-link">已有账号？<a th:href="@{/login}">去登录</a></p>
+</div>
+</body>
+</html>

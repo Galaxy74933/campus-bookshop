@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments :: head('我的购物车 - 网上书城')}"></head>
+<body>
+<nav th:replace="~{fragments :: shopNav('cart')}"></nav>
+<div class="container">
+    <div th:replace="~{fragments :: alert}"></div>
+
+    <div class="card">
+        <h3>我的购物车</h3>
+
+        <table class="list" th:if="${!items.isEmpty()}">
+            <thead>
+            <tr>
+                <th>书名</th>
+                <th>单价（元）</th>
+                <th>数量</th>
+                <th>小计（元）</th>
+                <th>操作</th>
+            </tr>
+            </thead>
+            <tbody>
+            <tr th:each="it : ${items}">
+                <td th:text="${it.title}"></td>
+                <td th:text="${#numbers.formatDecimal(it.price, 1, 2)}"></td>
+                <td>
+                    <form th:action="@{/shop/cart/update}" method="post" class="inline-form">
+                        <input type="hidden" name="itemId" th:value="${it.itemId}">
+                        <input type="number" name="quantity" th:value="${it.quantity}" min="1"
+                               th:max="${it.stock}" class="qty-input" title="修改数量">
+                        <button type="submit" class="btn btn-sm">修改</button>
+                    </form>
+                    <span class="stock-hint" th:text="'库存 ' + ${it.stock} + ' 本'"></span>
+                </td>
+                <td th:text="${#numbers.formatDecimal(it.subtotal, 1, 2)}"></td>
+                <td>
+                    <form th:action="@{/shop/cart/remove}" method="post" class="inline-form"
+                          onsubmit="return confirm('确定移除该书吗？')">
+                        <input type="hidden" name="itemId" th:value="${it.itemId}">
+                        <button type="submit" class="btn btn-sm btn-danger">移除</button>
+                    </form>
+                </td>
+            </tr>
+            </tbody>
+        </table>
+
+        <p class="empty" th:if="${items.isEmpty()}">
+            购物车还是空的，去 <a th:href="@{/shop/books}">挑选图书</a> 吧
+        </p>
+
+        <div class="cart-footer" th:if="${!items.isEmpty()}">
+            <div class="total">
+                合计：<span class="amount" th:text="'￥' + ${#numbers.formatDecimal(total, 1, 2)}"></span>
+            </div>
+            <div class="actions">
+                <a class="btn" th:href="@{/shop/books}">继续选购</a>
+                <form th:action="@{/shop/cart/clear}" method="post" class="inline-form"
+                      onsubmit="return confirm('确定清空购物车吗？')">
+                    <button type="submit" class="btn btn-danger">清空购物车</button>
+                </form>
+                <form th:action="@{/shop/cart/checkout}" method="post" class="inline-form"
+                      onsubmit="return confirm('将使用购书款余额一次性支付并清空购物车，确定结算吗？')">
+                    <button type="submit" class="btn btn-success">结算支付</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+</body>
+</html>

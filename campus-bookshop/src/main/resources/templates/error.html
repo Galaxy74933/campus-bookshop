@@ -1,0 +1,11 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments :: head('系统提示')}"></head>
+<body>
+<div class="auth-box card error-box">
+    <p class="code">:(</p>
+    <p th:text="${errorMsg} ?: '系统出现异常，请稍后重试'"></p>
+    <p style="margin-top:16px"><a th:href="@{/}">返回首页</a></p>
+</div>
+</body>
+</html>

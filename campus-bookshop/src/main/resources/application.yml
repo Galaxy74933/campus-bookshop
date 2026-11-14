@@ -1,0 +1,27 @@
+server:
+  port: 8080
+
+spring:
+  datasource:
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    url: jdbc:mysql://localhost:3306/bookshop_zcode?useUnicode=true&characterEncoding=utf8&useSSL=false&serverTimezone=Asia/Shanghai&allowPublicKeyRetrieval=true
+    username: root
+    password: root
+  sql:
+    init:
+      mode: always
+      encoding: utf-8
+      schema-locations: classpath:db/schema.sql
+      data-locations: classpath:db/data.sql
+  thymeleaf:
+    cache: false
+
+mybatis:
+  mapper-locations: classpath:mapper/*.xml
+  type-aliases-package: com.example.bookshop.entity
+  configuration:
+    map-underscore-to-camel-case: true
+
+logging:
+  level:
+    com.example.bookshop.mapper: debug

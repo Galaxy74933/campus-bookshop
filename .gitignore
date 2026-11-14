@@ -1,0 +1,17 @@
+# This repository tracks only the campus-bookshop source project.
+/*
+!/.gitignore
+!/campus-bookshop/
+
+# Keep source code, build configuration and the project README.
+/campus-bookshop/*
+!/campus-bookshop/.gitignore
+!/campus-bookshop/pom.xml
+!/campus-bookshop/README.md
+!/campus-bookshop/src/
+
+# Exclude generated files even if they appear below src.
+**/node_modules/
+**/target/
+**/*.log
+**/~$*

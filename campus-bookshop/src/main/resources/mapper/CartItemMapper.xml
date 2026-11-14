@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.example.bookshop.mapper.CartItemMapper">
+
+    <insert id="upsert">
+        INSERT INTO t_cart_item (user_id, book_id, quantity)
+        VALUES (#{userId}, #{bookId}, #{quantity})
+        ON DUPLICATE KEY UPDATE quantity = quantity + #{quantity}
+    </insert>
+
+    <select id="findByUserIdAndBookId" resultType="com.example.bookshop.entity.CartItem">
+        SELECT * FROM t_cart_item WHERE user_id = #{userId} AND book_id = #{bookId}
+    </select>
+
+    <select id="findById" resultType="com.example.bookshop.entity.CartItem">
+        SELECT * FROM t_cart_item WHERE id = #{id}
+    </select>
+
+    <update id="updateQuantity">
+        UPDATE t_cart_item SET quantity = #{quantity} WHERE id = #{id}
+    </update>
+
+    <delete id="deleteById">
+        DELETE FROM t_cart_item WHERE id = #{id}
+    </delete>
+
+    <delete id="deleteByUserId">
+        DELETE FROM t_cart_item WHERE user_id = #{userId}
+    </delete>
+
+    <select id="findByUserId" resultType="com.example.bookshop.entity.CartItem">
+        SELECT * FROM t_cart_item WHERE user_id = #{userId} ORDER BY id
+    </select>
+
+    <select id="selectViewByUserId" resultType="com.example.bookshop.dto.CartItemView">
+        SELECT c.id         AS itemId,
+               c.book_id    AS bookId,
+               b.title      AS title,
+               b.price      AS price,
+               c.quantity   AS quantity,
+               b.price * c.quantity AS subtotal,
+               b.stock      AS stock
+        FROM t_cart_item c
+        JOIN t_book b ON b.id = c.book_id
+        WHERE c.user_id = #{userId}
+        ORDER BY c.id
+    </select>
+</mapper>

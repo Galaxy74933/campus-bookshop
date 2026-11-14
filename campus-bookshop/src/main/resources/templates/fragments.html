@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head th:fragment="head(title)">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title th:text="${title}">网上购书系统</title>
+    <link th:href="@{/css/style.css(v='auth-card-2')}" rel="stylesheet">
+</head>
+<body>
+<nav th:fragment="breadcrumbs(entryLabel, entryUrl, currentLabel)" class="breadcrumbs" aria-label="当前位置">
+    <ol>
+        <li>
+            <a th:if="${entryLabel != null}" th:href="@{/}">主界面</a>
+            <span th:if="${entryLabel == null}" aria-current="page">主界面</span>
+        </li>
+        <li th:if="${entryLabel != null}">
+            <span class="breadcrumb-separator" aria-hidden="true">&gt;</span>
+            <a th:if="${currentLabel != null}" th:href="@{${entryUrl}}" th:text="${entryLabel}">入口</a>
+            <span th:if="${currentLabel == null}" aria-current="page" th:text="${entryLabel}">入口</span>
+        </li>
+        <li th:if="${currentLabel != null}">
+            <span class="breadcrumb-separator" aria-hidden="true">&gt;</span>
+            <span aria-current="page" th:text="${currentLabel}">当前页面</span>
+        </li>
+    </ol>
+</nav>
+
+<div th:fragment="alert">
+    <div class="alert alert-success" th:if="${msg}" th:text="${msg}"></div>
+    <div class="alert alert-error" th:if="${error}" th:text="${error}"></div>
+</div>
+
+<nav th:fragment="shopNav(active)" class="navbar">
+    <span class="brand">📚 网上书城</span>
+    <a th:href="@{/shop/books}" th:classappend="${active == 'books'} ? 'active'">图书浏览</a>
+    <a th:href="@{/shop/cart}" th:classappend="${active == 'cart'} ? 'active'">购物车</a>
+    <a th:href="@{/shop/orders}" th:classappend="${active == 'orders'} ? 'active'">我的订单</a>
+    <span class="spacer"></span>
+    <span class="nav-balance" th:if="${balance != null}">
+        购书款余额：<b th:text="${#numbers.formatDecimal(balance, 1, 2)}">0.00</b> 元
+    </span>
+    <span class="nav-user" th:if="${loginUser != null}" th:text="${loginUser.username}"></span>
+    <a th:href="@{/logout}">退出登录</a>
+</nav>
+
+<nav th:fragment="adminNav(active)" class="navbar">
+    <span class="brand">🛠 图书管理系统</span>
+    <a th:href="@{/admin/books}" th:classappend="${active == 'books'} ? 'active'">图书管理</a>
+    <span class="spacer"></span>
+    <span class="nav-user" th:if="${loginUser != null}" th:text="'管理员：' + ${loginUser.username}"></span>
+    <a th:href="@{/admin/logout}">退出登录</a>
+</nav>
+</body>
+</html>

@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments :: head('我的订单 - 网上书城')}"></head>
+<body>
+<nav th:replace="~{fragments :: shopNav('orders')}"></nav>
+<div class="container">
+    <div th:replace="~{fragments :: alert}"></div>
+
+    <p class="card empty" th:if="${orders.isEmpty()}">
+        还没有订单，去 <a th:href="@{/shop/books}">书城</a> 逛逛吧
+    </p>
+
+    <div class="card order-card" th:each="o : ${orders}">
+        <div class="order-head">
+            <span>订单号：<b th:text="${o.order.orderNo}"></b></span>
+            <span th:text="${#temporals.format(o.order.createdAt, 'yyyy-MM-dd HH:mm:ss')}"></span>
+            <span class="amount" th:text="'￥' + ${#numbers.formatDecimal(o.order.totalAmount, 1, 2)}"></span>
+        </div>
+        <table class="list" style="margin-top: 10px;">
+            <thead>
+            <tr>
+                <th>书名</th>
+                <th>单价（元）</th>
+                <th>数量</th>
+                <th>小计（元）</th>
+            </tr>
+            </thead>
+            <tbody>
+            <tr th:each="it : ${o.items}">
+                <td th:text="${it.bookTitle}"></td>
+                <td th:text="${#numbers.formatDecimal(it.bookPrice, 1, 2)}"></td>
+                <td th:text="${it.quantity}"></td>
+                <td th:text="${#numbers.formatDecimal(it.subtotal, 1, 2)}"></td>
+            </tr>
+            </tbody>
+        </table>
+    </div>
+</div>
+</body>
+</html>

@@ -1,0 +1,73 @@
+package com.example.bookshop.service;
+
+import com.example.bookshop.dto.BookForm;
+import com.example.bookshop.dto.PageResult;
+import com.example.bookshop.entity.Book;
+import com.example.bookshop.exception.BizException;
+import com.example.bookshop.mapper.BookMapper;
+import org.springframework.stereotype.Service;
+
+import java.util.List;
+
+@Service
+public class BookService {
+
+    private final BookMapper bookMapper;
+
+    public BookService(BookMapper bookMapper) {
+        this.bookMapper = bookMapper;
+    }
+
+    /**
+     * 分页查询图书，keyword 按书名模糊匹配。
+     */
+    public PageResult<Book> page(String keyword, int page, int size) {
+        String kw = keyword == null ? "" : keyword.trim();
+        if (page < 1) {
+            page = 1;
+        }
+        if (size < 1) {
+            size = 10;
+        }
+        long total = bookMapper.count(kw);
+        int totalPages = (int) Math.ceil(total / (double) size);
+        if (page > totalPages && totalPages > 0) {
+            page = totalPages;
+        }
+        List<Book> records = bookMapper.selectList(kw, (page - 1) * size, size);
+        return new PageResult<>(records, total, page, size, totalPages);
+    }
+
+    public Book findById(Long id) {
+        Book book = bookMapper.findById(id);
+        if (book == null) {
+            throw new BizException("图书不存在或已下架");
+        }
+        return book;
+    }
+
+    public void create(BookForm form) {
+        Book book = new Book();
+        book.setTitle(form.getTitle().trim());
+        book.setAuthor(form.getAuthor() == null ? "" : form.getAuthor().trim());
+        book.setPrice(form.getPrice());
+        book.setStock(form.getStock());
+        bookMapper.insert(book);
+    }
+
+    public void update(Long id, BookForm form) {
+        findById(id);
+        Book book = new Book();
+        book.setId(id);
+        book.setTitle(form.getTitle().trim());
+        book.setAuthor(form.getAuthor() == null ? "" : form.getAuthor().trim());
+        book.setPrice(form.getPrice());
+        book.setStock(form.getStock());
+        bookMapper.update(book);
+    }
+
+    public void delete(Long id) {
+        findById(id);
+        bookMapper.deleteById(id);
+    }
+}
