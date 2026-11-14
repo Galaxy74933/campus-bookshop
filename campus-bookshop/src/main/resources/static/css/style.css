@@ -257,6 +257,45 @@ table.list th {
 }
 
 /* 表单 */
+.academic-form {
+    max-width: 600px;
+    margin: 24px auto;
+}
+
+.form-help {
+    color: #6b7a90;
+    font-size: 13px;
+    line-height: 1.6;
+}
+
+.relation-options {
+    border: 1px solid #d5dce6;
+    border-radius: 5px;
+    padding: 12px;
+    margin-bottom: 18px;
+    max-height: 300px;
+    overflow-y: auto;
+}
+
+.relation-options legend {
+    padding: 0 5px;
+    font-size: 14px;
+    color: #51607a;
+}
+
+.checkbox-option {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 7px 0;
+    cursor: pointer;
+}
+
+.checkbox-option input {
+    flex-shrink: 0;
+    accent-color: #2563eb;
+}
+
 .form-group {
     margin-bottom: 14px;
 }

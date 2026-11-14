@@ -5,6 +5,7 @@
 <nav th:replace="~{fragments :: adminNav('books')}"></nav>
 <div class="container">
     <div class="card" style="max-width: 520px; margin: 24px auto;">
+        <nav th:replace="~{fragments :: adminBreadcrumbs('图书管理', '/admin/books', ${isEdit} ? '编辑图书' : '新增图书')}"></nav>
         <h3 th:text="${isEdit} ? '编辑图书' : '新增图书'"></h3>
         <div th:replace="~{fragments :: alert}"></div>
         <form th:action="${isEdit} ? @{/admin/books/{id}(id=${bookForm.id})} : @{/admin/books}"
@@ -25,6 +26,15 @@
                 <label>库存数量 *</label>
                 <input type="number" th:field="*{stock}" min="0" step="1" placeholder="请输入库存数量">
             </div>
+            <fieldset class="relation-options">
+                <legend>关联课程（可多选）</legend>
+                <p class="form-help">可以暂不关联；取消勾选并保存即可解除关联。</p>
+                <p th:if="${courses.isEmpty()}" class="form-help">暂无课程，可先保存图书，再去<a th:href="@{/admin/courses/add}">新增课程</a>。</p>
+                <label class="checkbox-option" th:each="c : ${courses}">
+                    <input type="checkbox" th:field="*{courseIds}" th:value="${c.id}">
+                    <span th:text="${c.name}"></span>
+                </label>
+            </fieldset>
             <button type="submit" class="btn btn-primary" th:text="${isEdit} ? '保存修改' : '创建图书'"></button>
             <a class="btn" th:href="@{/admin/books}">返回列表</a>
         </form>

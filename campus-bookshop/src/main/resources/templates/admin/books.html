@@ -16,12 +16,14 @@
     </div>
 
     <div class="card">
+        <nav th:replace="~{fragments :: adminBreadcrumbs('图书管理', '/admin/books', null)}"></nav>
         <table class="list">
             <thead>
             <tr>
                 <th>ID</th>
                 <th>书名</th>
                 <th>作者</th>
+                <th>关联课程</th>
                 <th>单价（元）</th>
                 <th>库存</th>
                 <th>创建时间</th>
@@ -33,6 +35,10 @@
                 <td th:text="${b.id}"></td>
                 <td th:text="${b.title}"></td>
                 <td th:text="${b.author}"></td>
+                <td>
+                    <span th:if="${bookCourses[b.id].isEmpty()}" class="form-help">暂未关联</span>
+                    <span th:each="c, s : ${bookCourses[b.id]}" th:text="${c.name + (s.last ? '' : '、')}"></span>
+                </td>
                 <td th:text="${#numbers.formatDecimal(b.price, 1, 2)}"></td>
                 <td>
                     <span class="badge" th:classappend="${b.stock > 0} ? 'badge-ok' : 'badge-danger'"
@@ -48,7 +54,7 @@
                 </td>
             </tr>
             <tr th:if="${pageResult.records.isEmpty()}">
-                <td colspan="7" class="empty">暂无图书，点击右上角「新增图书」创建</td>
+                <td colspan="8" class="empty">暂无图书，点击右上角「新增图书」创建</td>
             </tr>
             </tbody>
         </table>

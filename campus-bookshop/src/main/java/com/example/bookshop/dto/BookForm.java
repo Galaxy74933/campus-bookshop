@@ -8,6 +8,8 @@ import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 
 import java.math.BigDecimal;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * 后台创建/编辑图书的表单对象。
@@ -15,6 +17,10 @@ import java.math.BigDecimal;
 public class BookForm {
 
     private Long id;
+    private List<Long> courseIds = new ArrayList<>();
+
+    public List<Long> getCourseIds() { return courseIds; }
+    public void setCourseIds(List<Long> courseIds) { this.courseIds = courseIds; }
 
     @NotBlank(message = "书名不能为空")
     @Size(max = 200, message = "书名不能超过 200 字符")

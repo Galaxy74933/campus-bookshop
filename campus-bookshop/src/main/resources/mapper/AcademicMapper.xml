@@ -1,0 +1,63 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.example.bookshop.mapper.AcademicMapper">
+    <resultMap id="courseWithMajors" type="com.example.bookshop.entity.Course">
+        <id property="id" column="id"/>
+        <result property="name" column="name"/>
+        <collection property="majors" ofType="com.example.bookshop.entity.Major" notNullColumn="major_id">
+            <id property="id" column="major_id"/>
+            <result property="name" column="major_name"/>
+        </collection>
+    </resultMap>
+    <select id="listMajors" resultType="com.example.bookshop.entity.Major">
+        SELECT id, name FROM t_major ORDER BY id DESC
+    </select>
+    <select id="findMajor" resultType="com.example.bookshop.entity.Major">
+        SELECT id, name FROM t_major WHERE id = #{id}
+    </select>
+    <insert id="insertMajor" useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO t_major (name) VALUES (#{name})
+    </insert>
+    <update id="updateMajor">UPDATE t_major SET name = #{name} WHERE id = #{id}</update>
+    <delete id="deleteMajor">DELETE FROM t_major WHERE id = #{id}</delete>
+    <select id="majorReferenceCount" resultType="int">
+        SELECT COUNT(*) FROM t_major_course WHERE major_id = #{id}
+    </select>
+    <sql id="courseColumns">
+        SELECT c.id, c.name, m.id AS major_id, m.name AS major_name
+        FROM t_course c
+        LEFT JOIN t_major_course mc ON mc.course_id = c.id
+        LEFT JOIN t_major m ON m.id = mc.major_id
+    </sql>
+    <select id="listCourses" resultMap="courseWithMajors">
+        <include refid="courseColumns"/> ORDER BY c.id DESC, m.id
+    </select>
+    <select id="findCourse" resultMap="courseWithMajors">
+        <include refid="courseColumns"/> WHERE c.id = #{id} ORDER BY m.id
+    </select>
+    <insert id="insertCourse" useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO t_course (name) VALUES (#{name})
+    </insert>
+    <update id="updateCourse">UPDATE t_course SET name = #{name} WHERE id = #{id}</update>
+    <delete id="deleteCourse">DELETE FROM t_course WHERE id = #{id}</delete>
+    <select id="courseReferenceCount" resultType="int">
+        SELECT (SELECT COUNT(*) FROM t_major_course WHERE course_id = #{id})
+             + (SELECT COUNT(*) FROM t_book_course WHERE course_id = #{id})
+    </select>
+    <delete id="clearCourseMajors">DELETE FROM t_major_course WHERE course_id = #{courseId}</delete>
+    <insert id="insertCourseMajor">
+        INSERT INTO t_major_course (major_id, course_id) VALUES (#{majorId}, #{courseId})
+    </insert>
+    <select id="courseIdsForBook" resultType="long">
+        SELECT course_id FROM t_book_course WHERE book_id = #{bookId} ORDER BY course_id
+    </select>
+    <select id="coursesForBook" resultMap="courseWithMajors">
+        <include refid="courseColumns"/>
+        INNER JOIN t_book_course bc ON bc.course_id = c.id
+        WHERE bc.book_id = #{bookId} ORDER BY c.id DESC, m.id
+    </select>
+    <delete id="clearBookCourses">DELETE FROM t_book_course WHERE book_id = #{bookId}</delete>
+    <insert id="insertBookCourse">
+        INSERT INTO t_book_course (book_id, course_id) VALUES (#{bookId}, #{courseId})
+    </insert>
+</mapper>

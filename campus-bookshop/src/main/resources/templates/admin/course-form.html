@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments :: head(${courseForm.id == null} ? '新增课程 - 后台' : '编辑课程 - 后台')}"></head>
+<body>
+<nav th:replace="~{fragments :: adminNav('courses')}"></nav>
+<div class="container">
+    <div class="card academic-form">
+        <nav th:replace="~{fragments :: adminBreadcrumbs('课程管理', '/admin/courses', ${courseForm.id == null} ? '新增课程' : '编辑课程')}"></nav>
+        <h2 th:text="${courseForm.id == null} ? '新增课程' : '编辑课程'"></h2>
+        <div th:replace="~{fragments :: alert}"></div>
+        <form method="post" th:object="${courseForm}" th:action="${courseForm.id == null} ? @{/admin/courses} : @{/admin/courses/{id}(id=${courseForm.id})}">
+            <div class="form-group">
+                <label for="name">课程名称 *</label>
+                <input type="text" th:field="*{name}" maxlength="100" required placeholder="例如：Java 程序设计">
+            </div>
+            <fieldset class="relation-options">
+                <legend>所属专业（可多选）</legend>
+                <p class="form-help">可以暂不关联；编辑时取消勾选并保存即可解除关联。</p>
+                <p th:if="${majors.isEmpty()}" class="form-help">暂无专业，可先保存课程，再去<a th:href="@{/admin/majors/add}">新增专业</a>。</p>
+                <label class="checkbox-option" th:each="m : ${majors}">
+                    <input type="checkbox" th:field="*{majorIds}" th:value="${m.id}">
+                    <span th:text="${m.name}"></span>
+                </label>
+            </fieldset>
+            <button type="submit" class="btn btn-primary">保存课程</button>
+        </form>
+    </div>
+</div>
+</body>
+</html>

@@ -4,6 +4,11 @@ import com.example.bookshop.dto.BookForm;
 import com.example.bookshop.entity.Book;
 import com.example.bookshop.exception.BizException;
 import com.example.bookshop.service.BookService;
+import com.example.bookshop.service.AcademicService;
+import com.example.bookshop.entity.Course;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
@@ -25,9 +30,11 @@ import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 public class AdminBookController {
 
     private final BookService bookService;
+    private final AcademicService academicService;
 
-    public AdminBookController(BookService bookService) {
+    public AdminBookController(BookService bookService, AcademicService academicService) {
         this.bookService = bookService;
+        this.academicService = academicService;
     }
 
     @Operation(summary = "管理首页", description = "重定向到图书管理列表页面")
@@ -42,7 +49,13 @@ public class AdminBookController {
     public String list(@Parameter(description = "搜索关键字") String keyword, 
                      @Parameter(description = "页码，从1开始") Integer page, 
                      Model model) {
-        model.addAttribute("pageResult", bookService.page(keyword, page == null ? 1 : page, 10));
+        var pageResult = bookService.page(keyword, page == null ? 1 : page, 10);
+        model.addAttribute("pageResult", pageResult);
+        Map<Long, List<Course>> bookCourses = new LinkedHashMap<>();
+        for (Book book : pageResult.getRecords()) {
+            bookCourses.put(book.getId(), academicService.coursesForBook(book.getId()));
+        }
+        model.addAttribute("bookCourses", bookCourses);
         model.addAttribute("keyword", keyword == null ? "" : keyword);
         return "admin/books";
     }
@@ -50,6 +63,7 @@ public class AdminBookController {
     @Operation(summary = "添加图书页面", description = "返回图书添加表单页面")
     @GetMapping("/books/add")
     public String addPage(Model model) {
+        model.addAttribute("courses", academicService.courses());
         model.addAttribute("bookForm", new BookForm());
         model.addAttribute("isEdit", false);
         return "admin/book-form";
@@ -63,12 +77,19 @@ public class AdminBookController {
     @PostMapping("/books")
     public String create(@Parameter(description = "图书表单信息") @Valid BookForm bookForm, 
                         BindingResult result, Model model, RedirectAttributes ra) {
+        model.addAttribute("courses", academicService.courses());
+        model.addAttribute("isEdit", false);
         if (result.hasErrors()) {
             model.addAttribute("isEdit", false);
             model.addAttribute("error", firstError(result));
             return "admin/book-form";
         }
-        bookService.create(bookForm);
+        try {
+            bookService.create(bookForm);
+        } catch (BizException e) {
+            model.addAttribute("error", e.getMessage());
+            return "admin/book-form";
+        }
         ra.addFlashAttribute("msg", "图书创建成功");
         return "redirect:/admin/books";
     }
@@ -87,6 +108,8 @@ public class AdminBookController {
         form.setAuthor(book.getAuthor());
         form.setPrice(book.getPrice());
         form.setStock(book.getStock());
+        form.setCourseIds(academicService.courseIdsForBook(id));
+        model.addAttribute("courses", academicService.courses());
         model.addAttribute("bookForm", form);
         model.addAttribute("isEdit", true);
         return "admin/book-form";
@@ -103,12 +126,19 @@ public class AdminBookController {
                        BindingResult result,
                        Model model, RedirectAttributes ra) {
         bookForm.setId(id);
+        model.addAttribute("courses", academicService.courses());
+        model.addAttribute("isEdit", true);
         if (result.hasErrors()) {
             model.addAttribute("isEdit", true);
             model.addAttribute("error", firstError(result));
             return "admin/book-form";
         }
-        bookService.update(id, bookForm);
+        try {
+            bookService.update(id, bookForm);
+        } catch (BizException e) {
+            model.addAttribute("error", e.getMessage());
+            return "admin/book-form";
+        }
         ra.addFlashAttribute("msg", "图书更新成功");
         return "redirect:/admin/books";
     }
@@ -127,6 +157,7 @@ public class AdminBookController {
     }
 
     private String firstError(BindingResult result) {
+        if (result.hasFieldErrors("courseIds")) return "请选择有效的关联课程";
         if (result.hasFieldErrors("price")) {
             return "价格必须是有效数字，且大于 0，最多两位小数";
         }

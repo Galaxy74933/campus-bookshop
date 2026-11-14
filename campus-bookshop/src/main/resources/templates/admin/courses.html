@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments :: head('课程管理 - 后台')}"></head>
+<body>
+<nav th:replace="~{fragments :: adminNav('courses')}"></nav>
+<div class="container">
+    <div class="card">
+        <nav th:replace="~{fragments :: adminBreadcrumbs('课程管理', '/admin/courses', null)}"></nav>
+        <h2>课程管理</h2>
+        <p class="form-help">一门课程可属于多个专业。课程建好后，可在图书编辑页关联教材和参考书。</p>
+        <div th:replace="~{fragments :: alert}"></div>
+        <div class="toolbar"><a class="btn btn-success" th:href="@{/admin/courses/add}">+ 新增课程</a></div>
+        <table class="list">
+            <thead><tr><th>ID</th><th>课程名称</th><th>所属专业</th><th>操作</th></tr></thead>
+            <tbody>
+            <tr th:each="c : ${courses}">
+                <td th:text="${c.id}"></td><td th:text="${c.name}"></td>
+                <td>
+                    <span th:if="${c.majors.isEmpty()}" class="form-help">暂未关联</span>
+                    <span th:each="m, s : ${c.majors}" th:text="${m.name + (s.last ? '' : '、')}"></span>
+                </td>
+                <td>
+                    <a class="btn btn-sm" th:href="@{/admin/courses/{id}/edit(id=${c.id})}">编辑</a>
+                    <form class="inline-form" method="post" th:action="@{/admin/courses/{id}/delete(id=${c.id})}" onsubmit="return confirm('确定删除该课程吗？请先解除专业和图书关联。')">
+                        <button type="submit" class="btn btn-sm btn-danger">删除</button>
+                    </form>
+                </td>
+            </tr>
+            <tr th:if="${courses.isEmpty()}"><td colspan="4" class="empty">暂无课程，请先新增课程，例如“Java 程序设计”。</td></tr>
+            </tbody>
+        </table>
+    </div>
+</div>
+</body>
+</html>

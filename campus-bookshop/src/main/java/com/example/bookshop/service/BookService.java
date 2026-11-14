@@ -6,6 +6,7 @@ import com.example.bookshop.entity.Book;
 import com.example.bookshop.exception.BizException;
 import com.example.bookshop.mapper.BookMapper;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 
@@ -13,9 +14,11 @@ import java.util.List;
 public class BookService {
 
     private final BookMapper bookMapper;
+    private final AcademicService academicService;
 
-    public BookService(BookMapper bookMapper) {
+    public BookService(BookMapper bookMapper, AcademicService academicService) {
         this.bookMapper = bookMapper;
+        this.academicService = academicService;
     }
 
     /**
@@ -46,16 +49,21 @@ public class BookService {
         return book;
     }
 
+    @Transactional
     public void create(BookForm form) {
+        List<Long> courseIds = academicService.validateCourseIds(form.getCourseIds());
         Book book = new Book();
         book.setTitle(form.getTitle().trim());
         book.setAuthor(form.getAuthor() == null ? "" : form.getAuthor().trim());
         book.setPrice(form.getPrice());
         book.setStock(form.getStock());
         bookMapper.insert(book);
+        academicService.replaceBookCourses(book.getId(), courseIds);
     }
 
+    @Transactional
     public void update(Long id, BookForm form) {
+        List<Long> courseIds = academicService.validateCourseIds(form.getCourseIds());
         findById(id);
         Book book = new Book();
         book.setId(id);
@@ -63,7 +71,8 @@ public class BookService {
         book.setAuthor(form.getAuthor() == null ? "" : form.getAuthor().trim());
         book.setPrice(form.getPrice());
         book.setStock(form.getStock());
-        bookMapper.update(book);
+        if (bookMapper.update(book) == 0) throw new BizException("图书不存在，请刷新列表");
+        academicService.replaceBookCourses(id, courseIds);
     }
 
     public void delete(Long id) {
