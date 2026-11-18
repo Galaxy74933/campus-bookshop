@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.example.bookshop.mapper.ReadingListMapper">
+ <select id="books" resultType="com.example.bookshop.entity.Book">
+  SELECT <include refid="com.example.bookshop.mapper.BookMapper.resourceColumns"/>
+  FROM t_reading_list_book i JOIN t_book b ON b.id=i.book_id
+  <include refid="com.example.bookshop.mapper.BookMapper.resourceJoins"/>
+  WHERE i.list_id=#{id} ORDER BY i.id
+ </select>
+</mapper>

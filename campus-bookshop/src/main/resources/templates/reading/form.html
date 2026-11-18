@@ -1,0 +1,15 @@
+<!DOCTYPE html><html xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments :: head('维护学习书单')}"></head><body>
+<th:block th:if="${admin}"><nav th:replace="~{fragments :: adminNav('reading')}"></nav></th:block>
+<th:block th:unless="${admin}"><nav th:replace="~{fragments :: shopNav('reading')}"></nav></th:block>
+<div class="container"><div class="card academic-form">
+<th:block th:if="${admin}"><nav th:replace="~{fragments :: adminBreadcrumbs('书单管理',${base},'维护书单')}"></nav></th:block>
+<th:block th:unless="${admin}"><nav th:replace="~{fragments :: readerBreadcrumbs('学习书单',${base},'维护书单')}"></nav></th:block>
+<h2 th:text="${readingList.id == null} ? '创建书单' : '编辑书单'"></h2>
+<p class="form-help" th:text="${admin} ? '公开书单供所有读者查看。' : '个人书单仅你自己可见。'"></p>
+<div th:replace="~{fragments :: alert}"></div>
+<form th:action="@{${readingList.id == null ? base : base + '/' + readingList.id}}" method="post" th:object="${readingList}">
+<div class="form-group"><label for="name">书单名称 *</label><input type="text" th:field="*{name}" maxlength="100" required></div>
+<div class="form-group"><label for="description">书单说明</label><textarea th:field="*{description}" maxlength="500" rows="4" placeholder="例如：适合零基础学习 Java 的同学"></textarea></div>
+<button class="btn btn-primary">保存书单</button>
+</form></div></div></body></html>

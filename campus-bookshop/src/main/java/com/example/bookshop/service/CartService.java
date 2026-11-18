@@ -24,14 +24,16 @@ public class CartService {
     /**
      * 加入购物车：同一图书自动累加数量，累计数量不能超过当前库存。
      */
+    @org.springframework.transaction.annotation.Transactional
     public void add(Long userId, Long bookId, Integer quantity) {
         if (quantity == null || quantity < 1) {
             throw new BizException("购买数量至少为 1");
         }
-        Book book = bookMapper.findById(bookId);
+        Book book = bookMapper.findByIdForUpdate(bookId);
         if (book == null) {
             throw new BizException("图书不存在或已下架");
         }
+        if (!book.isPurchasable()) throw new BizException("该资源仅供浏览，不能购买");
         CartItem existing = cartItemMapper.findByUserIdAndBookId(userId, bookId);
         int current = existing == null ? 0 : existing.getQuantity();
         if (current + quantity > book.getStock()) {
@@ -41,6 +43,7 @@ public class CartService {
         cartItemMapper.upsert(userId, bookId, quantity);
     }
 
+    @org.springframework.transaction.annotation.Transactional
     public void updateQuantity(Long userId, Long itemId, Integer quantity) {
         if (quantity == null || quantity < 1) {
             throw new BizException("购买数量至少为 1");
@@ -49,10 +52,11 @@ public class CartService {
         if (item == null || !item.getUserId().equals(userId)) {
             throw new BizException("购物车记录不存在");
         }
-        Book book = bookMapper.findById(item.getBookId());
+        Book book = bookMapper.findByIdForUpdate(item.getBookId());
         if (book == null) {
             throw new BizException("图书不存在或已下架");
         }
+        if (!book.isPurchasable()) throw new BizException("该资源仅供浏览，不能购买");
         if (quantity > book.getStock()) {
             throw new BizException("《" + book.getTitle() + "》库存不足：当前库存 "
                     + book.getStock() + " 本");

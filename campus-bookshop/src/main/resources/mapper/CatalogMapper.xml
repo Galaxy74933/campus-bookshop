@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.example.bookshop.mapper.CatalogMapper">
+ <sql id="from">FROM t_book b <include refid="com.example.bookshop.mapper.BookMapper.resourceJoins"/></sql>
+ <sql id="filter">
+  <where>
+   <if test="q.keyword != ''">
+    <choose>
+     <when test="q.field == 'all'">(LOCATE(LOWER(#{q.keyword}),LOWER(CONCAT(b.title,' ',b.author,' ',COALESCE(ri.publisher,''),' ',COALESCE(ri.identifier,'')))) &gt; 0)</when>
+     <when test="q.field == 'author'">LOCATE(LOWER(#{q.keyword}),LOWER(b.author)) &gt; 0</when>
+     <when test="q.field == 'publisher'">LOCATE(LOWER(#{q.keyword}),LOWER(ri.publisher)) &gt; 0</when>
+     <when test="q.field == 'identifier'">LOWER(ri.identifier)=LOWER(#{q.keyword})</when>
+     <otherwise>LOCATE(LOWER(#{q.keyword}),LOWER(b.title)) &gt; 0</otherwise>
+    </choose>
+   </if>
+   <!-- Selected facets are a UNION, as requested. Keyword and stock filters narrow it. -->
+   <trim prefix="AND (" suffix=")" prefixOverrides="OR">
+    <if test="q.categoryId != null">
+     <choose><when test="q.categoryId == 0">OR bc.book_id IS NULL</when>
+     <otherwise>OR bc.category_id=#{q.categoryId} OR EXISTS(SELECT 1 FROM t_resource_category rc WHERE rc.book_id=b.id AND rc.category_id=#{q.categoryId})</otherwise></choose>
+    </if>
+    <if test="!q.categoryIds.isEmpty()">
+     OR bc.category_id IN <foreach collection="q.categoryIds" item="v" open="(" close=")" separator=",">#{v}</foreach>
+     OR EXISTS(SELECT 1 FROM t_resource_category rc WHERE rc.book_id=b.id AND rc.category_id IN <foreach collection="q.categoryIds" item="v" open="(" close=")" separator=",">#{v}</foreach>)
+     <if test="q.categoryIds.contains(0L)">OR bc.book_id IS NULL</if>
+    </if>
+    <if test="!q.resourceTypes.isEmpty()">OR COALESCE(ri.resource_type,'图书') IN <foreach collection="q.resourceTypes" item="v" open="(" close=")" separator=",">#{v}</foreach></if>
+    <if test="!q.languages.isEmpty()">OR COALESCE(NULLIF(ri.language,''),'未填写') IN <foreach collection="q.languages" item="v" open="(" close=")" separator=",">#{v}</foreach></if>
+   </trim>
+   <if test="q.stockStatus == 'low'">AND COALESCE(ri.resource_type,'图书')='图书' AND b.stock BETWEEN 1 AND #{q.threshold}</if>
+   <if test="q.stockStatus == 'empty'">AND COALESCE(ri.resource_type,'图书')='图书' AND b.stock=0</if>
+  </where>
+ </sql>
+ <select id="count" resultType="long">SELECT COUNT(*) <include refid="from"/><include refid="filter"/></select>
+ <select id="search" resultType="com.example.bookshop.entity.Book">
+  SELECT <include refid="com.example.bookshop.mapper.BookMapper.resourceColumns"/> <include refid="from"/><include refid="filter"/>
+  ORDER BY <choose><when test="q.sort == 'priceAsc'">CASE WHEN COALESCE(ri.resource_type,'图书')='图书' THEN 0 ELSE 1 END,b.price ASC,</when><when test="q.sort == 'priceDesc'">CASE WHEN COALESCE(ri.resource_type,'图书')='图书' THEN 0 ELSE 1 END,b.price DESC,</when></choose> b.id DESC
+  LIMIT #{size} OFFSET #{offset}
+ </select>
+</mapper>

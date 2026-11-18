@@ -1,17 +1,13 @@
 package com.example.bookshop.entity;
-
-import java.util.ArrayList;
-import java.util.List;
-
-public class Course {
+public class Category {
     private Long id;
     private String name;
-    private List<Major> majors = new ArrayList<>();
-
+    private int bookCount;
     public Long getId() { return id; }
     public void setId(Long id) { this.id = id; }
     public String getName() { return name; }
     public void setName(String name) { this.name = name; }
-    public List<Major> getMajors() { return majors; }
-    public void setMajors(List<Major> majors) { this.majors = majors; }
+    public int getBookCount() { return bookCount; }
+    public void setBookCount(int bookCount) { this.bookCount = bookCount; }
 }
+

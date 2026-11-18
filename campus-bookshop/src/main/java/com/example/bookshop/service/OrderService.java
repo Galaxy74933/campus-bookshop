@@ -58,10 +58,11 @@ public class OrderService {
         BigDecimal total = BigDecimal.ZERO;
         List<OrderItem> orderItems = new ArrayList<>();
         for (CartItem item : items) {
-            Book book = bookMapper.findById(item.getBookId());
+            Book book = bookMapper.findByIdForUpdate(item.getBookId());
             if (book == null) {
                 throw new BizException("购物车中的图书不存在或已下架");
             }
+            if (!book.isPurchasable()) throw new BizException("该资源仅供浏览，不能结算");
             if (book.getStock() < item.getQuantity()) {
                 throw new BizException("《" + book.getTitle() + "》库存不足：当前库存 "
                         + book.getStock() + " 本，需要 " + item.getQuantity() + " 本");

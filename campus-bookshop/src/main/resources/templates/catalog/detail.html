@@ -1,0 +1,27 @@
+<!DOCTYPE html><html xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments :: head('资源详情 - 校园学习书店')}"></head><body>
+<th:block th:if="${admin}"><nav th:replace="~{fragments :: adminNav('books')}"></nav></th:block>
+<th:block th:unless="${admin}"><nav th:replace="~{fragments :: shopNav('books')}"></nav></th:block>
+<div class="container"><div class="card">
+<th:block th:if="${admin}"><nav th:replace="~{fragments :: adminBreadcrumbs('资源管理',${base},'资源详情')}"></nav></th:block>
+<th:block th:unless="${admin}"><nav th:replace="~{fragments :: readerBreadcrumbs('资源浏览',${base},'资源详情')}"></nav></th:block>
+<div th:replace="~{fragments :: alert}"></div>
+<h2 th:text="${book.title}"></h2>
+<section class="resource-info" aria-labelledby="resource-info-heading"><h3 id="resource-info-heading">基本信息</h3><div class="resource-info-frame"><table class="resource-info-table"><tbody>
+<tr><th scope="row">资源类型</th><td th:text="${book.resourceType}"></td></tr>
+<tr><th scope="row">学科分类</th><td th:text="${book.categoryName}"></td></tr>
+<tr><th scope="row">作者</th><td th:text="${#strings.isEmpty(book.author)} ? '未填写' : ${book.author}"></td></tr>
+<tr><th scope="row">作者单位</th><td th:text="${#strings.isEmpty(book.authorUnit)} ? '未填写' : ${book.authorUnit}"></td></tr>
+<tr><th scope="row">语言</th><td th:text="${#strings.isEmpty(book.language)} ? '未填写' : ${book.language}"></td></tr>
+<tr><th scope="row">来源／出版社</th><td th:text="${#strings.isEmpty(book.publisher)} ? '未填写' : ${book.publisher}"></td></tr>
+<tr><th scope="row">出版／发表日期</th><td th:text="${book.publishDate != null} ? ${book.publishDate} : '未填写'"></td></tr>
+<tr><th scope="row">ISBN／DOI</th><td th:text="${#strings.isEmpty(book.identifier)} ? '未填写' : ${book.identifier}"></td></tr>
+<th:block th:if="${book.purchasable}"><tr><th scope="row">价格</th><td th:text="${#numbers.formatDecimal(book.price,1,2) + ' 元'}"></td></tr><tr><th scope="row">库存</th><td th:text="${book.stock + ' 本'}"></td></tr></th:block>
+</tbody></table></div></section>
+<section class="resource-introduction" aria-labelledby="resource-intro-heading"><h3 id="resource-intro-heading">内容简介</h3><p class="resource-description" th:text="${#strings.isEmpty(book.description)} ? '暂无简介' : ${book.description}"></p></section>
+<p th:unless="${book.purchasable}" class="form-help">该资源仅供浏览，不参与购买。</p>
+<div class="row-actions resource-detail-actions">
+<a th:if="${admin}" class="btn btn-primary" th:href="@{/admin/books/{id}/edit(id=${book.id})}">编辑资源</a>
+<form th:if="${!admin and book.purchasable}" th:action="@{/shop/cart/add}" method="post" class="inline-form"><input type="hidden" name="bookId" th:value="${book.id}"><input class="qty-input" name="quantity" type="number" value="1" min="1" th:max="${book.stock}" aria-label="购买数量" th:disabled="${book.stock == 0}"><button class="btn btn-primary" th:disabled="${book.stock == 0}" th:text="${book.stock == 0} ? '暂时缺货' : '加入购物车'"></button></form>
+<a th:unless="${admin}" class="btn" th:href="@{/shop/reading-lists/choose(bookId=${book.id})}">加入书单</a>
+</div></div></div></body></html>

@@ -17,8 +17,21 @@
         DELETE FROM t_book WHERE id = #{id}
     </delete>
 
+    <sql id="resourceColumns">
+        b.*,bc.category_id,COALESCE(ri.resource_type,'图书') AS resource_type,
+        COALESCE(ri.language,'') AS language,ri.author_unit,ri.publisher,ri.publish_date,ri.identifier,ri.description,
+        (SELECT GROUP_CONCAT(c.name ORDER BY c.id SEPARATOR '、') FROM t_category c
+         WHERE c.id=bc.category_id OR EXISTS(SELECT 1 FROM t_resource_category rc WHERE rc.book_id=b.id AND rc.category_id=c.id)) AS category_name
+    </sql>
+    <sql id="resourceJoins">
+        LEFT JOIN t_book_category bc ON bc.book_id=b.id
+        LEFT JOIN t_resource_info ri ON ri.book_id=b.id
+    </sql>
     <select id="findById" resultType="com.example.bookshop.entity.Book">
-        SELECT * FROM t_book WHERE id = #{id}
+        SELECT <include refid="resourceColumns"/> FROM t_book b <include refid="resourceJoins"/> WHERE b.id=#{id}
+    </select>
+    <select id="findByIdForUpdate" resultType="com.example.bookshop.entity.Book">
+        SELECT <include refid="resourceColumns"/> FROM t_book b <include refid="resourceJoins"/> WHERE b.id=#{id} FOR UPDATE
     </select>
 
     <select id="selectList" resultType="com.example.bookshop.entity.Book">

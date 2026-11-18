@@ -17,6 +17,8 @@ public interface BookMapper {
 
     Book findById(@Param("id") Long id);
 
+    Book findByIdForUpdate(@Param("id") Long id);
+
     List<Book> selectList(@Param("keyword") String keyword,
                           @Param("offset") int offset,
                           @Param("size") int size);

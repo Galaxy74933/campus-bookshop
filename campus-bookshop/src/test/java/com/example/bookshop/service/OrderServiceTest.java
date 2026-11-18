@@ -29,7 +29,11 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 /**
  * 结算支付核心流程测试：正常扣款扣库存、余额不足、库存不足、并发防超卖。
  */
-@SpringBootTest
+@SpringBootTest(properties = {
+    "spring.datasource.url=jdbc:h2:mem:orders;MODE=MySQL;DB_CLOSE_DELAY=-1;DATABASE_TO_LOWER=TRUE",
+    "spring.datasource.driver-class-name=org.h2.Driver", "spring.datasource.username=sa", "spring.datasource.password=",
+    "spring.sql.init.data-locations=classpath:db/academic-test-data.sql", "logging.level.root=WARN",
+    "logging.level.org.springframework=WARN", "logging.level.com.example.bookshop.mapper=WARN"})
 class OrderServiceTest {
 
     @Autowired

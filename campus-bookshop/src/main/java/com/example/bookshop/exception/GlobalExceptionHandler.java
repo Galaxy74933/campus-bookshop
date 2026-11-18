@@ -13,6 +13,20 @@ import java.net.URI;
  */
 @ControllerAdvice
 public class GlobalExceptionHandler {
+    @ExceptionHandler(org.springframework.web.server.ResponseStatusException.class)
+    public String handleStatus(org.springframework.web.server.ResponseStatusException e, Model model,
+                               jakarta.servlet.http.HttpServletResponse response) {
+        response.setStatus(e.getStatusCode().value());
+        model.addAttribute("errorMsg", e.getReason() == null ? "无法访问此页面" : e.getReason());
+        return "error";
+    }
+
+    @ExceptionHandler(org.springframework.web.servlet.resource.NoResourceFoundException.class)
+    @org.springframework.web.bind.annotation.ResponseStatus(org.springframework.http.HttpStatus.NOT_FOUND)
+    public String notFound(Model model) {
+        model.addAttribute("errorMsg", "页面不存在或已停用");
+        return "error";
+    }
 
     @ExceptionHandler(BizException.class)
     public String handleBiz(BizException e, RedirectAttributes ra, HttpServletRequest request) {

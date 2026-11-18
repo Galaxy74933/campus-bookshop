@@ -1,0 +1,25 @@
+<!DOCTYPE html><html xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments :: head('学习书单 - 校园学习书店')}"></head><body>
+<th:block th:if="${admin}"><nav th:replace="~{fragments :: adminNav('reading')}"></nav></th:block>
+<th:block th:unless="${admin}"><nav th:replace="~{fragments :: shopNav('reading')}"></nav></th:block>
+<div class="container"><div class="card">
+<th:block th:if="${admin}"><nav th:replace="~{fragments :: adminBreadcrumbs('书单管理',${base},null)}"></nav></th:block>
+<th:block th:unless="${admin}"><nav th:replace="~{fragments :: readerBreadcrumbs('学习书单',${base},null)}"></nav></th:block>
+<div th:replace="~{fragments :: alert}"></div>
+<div class="toolbar"><h2>学习书单</h2><a class="btn btn-success" th:href="@{${base + '/add'}}" th:text="${admin} ? '＋创建公开书单' : '＋创建个人书单'"></a></div>
+<p class="form-help">用书单组织学习目标。图书、论文和期刊等资源都可以加入书单。</p>
+<h3 class="section-title">公开书单</h3>
+<div class="reading-grid"><article class="reading-card" th:each="r : ${publicLists}">
+ <h3><a th:href="@{${base + '/' + r.id}}" th:text="${r.name}"></a></h3>
+ <p class="booklist-description" th:text="${r.description}"></p>
+ <p class="form-help"><span th:text="${r.bookCount}"></span> 条资源 · 管理员推荐</p>
+ <a class="btn btn-sm" th:href="@{${base + '/' + r.id}}">查看书单</a>
+</article></div><p class="empty" th:if="${publicLists.isEmpty()}">暂无公开书单。</p>
+<section th:unless="${admin}"><h3 class="section-title">我的书单</h3><p class="form-help">个人书单仅你自己可见。</p>
+<div class="reading-grid"><article class="reading-card" th:each="r : ${personalLists}">
+ <h3><a th:href="@{${base + '/' + r.id}}" th:text="${r.name}"></a></h3>
+ <p class="booklist-description" th:text="${r.description}"></p><p class="form-help"><span th:text="${r.bookCount}"></span> 条资源 · 仅自己可见</p>
+ <a class="btn btn-sm" th:href="@{${base + '/' + r.id}}">查看书单</a>
+</article></div><p class="empty" th:if="${personalLists.isEmpty()}">还没有个人书单，点击上方按钮创建。</p>
+</section>
+</div></div></body></html>

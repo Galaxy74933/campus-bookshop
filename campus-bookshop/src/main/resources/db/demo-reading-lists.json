@@ -1,0 +1,59 @@
+[
+  {
+    "owner": "admin",
+    "role": "ADMIN",
+    "name": "Java Web 项目入门",
+    "description": "按语言基础、数据库和 Web 实践的顺序学习，适合准备课程大作业。",
+    "titles": [
+      "Java 核心技术（第12版）",
+      "MySQL 必知必会",
+      "Web 应用开发实践",
+      "Spring 实战（第6版）"
+    ]
+  },
+  {
+    "owner": "admin",
+    "role": "ADMIN",
+    "name": "数学与工程基础",
+    "description": "复习数学与统计知识，再结合工程案例练习应用。",
+    "titles": [
+      "高等数学学习指南",
+      "概率与统计习题精选",
+      "Engineering Mechanics Basics"
+    ]
+  },
+  {
+    "owner": "admin",
+    "role": "ADMIN",
+    "name": "学术阅读与研究方法",
+    "description": "结合写作指南、论文、期刊和调查报告了解学术阅读。",
+    "titles": [
+      "Academic Writing 学术写作入门",
+      "校园图书推荐方法研究",
+      "Journal of Campus Learning（演示期刊）",
+      "大学生数字阅读调查报告"
+    ]
+  },
+  {
+    "owner": "reader",
+    "role": "READER",
+    "name": "我的编程提升计划",
+    "description": "先学习 Python，再练习数据库设计，最后完成一个 Web 小项目。",
+    "titles": [
+      "Python 程序设计入门",
+      "Database Design Essentials",
+      "Web 应用开发实践"
+    ]
+  },
+  {
+    "owner": "reader",
+    "role": "READER",
+    "name": "课外阅读与设计灵感",
+    "description": "在专业课之外，探索经济学、视觉设计与数字阅读。",
+    "titles": [
+      "经济学与校园生活",
+      "视觉设计基础与练习",
+      "大学生数字阅读调查报告"
+    ]
+  }
+]

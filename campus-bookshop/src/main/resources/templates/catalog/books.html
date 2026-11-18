@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments :: head('校园学习书店 - 资源')}"></head>
+<body>
+<th:block th:if="${admin}"><nav th:replace="~{fragments :: adminNav('books')}"></nav></th:block>
+<th:block th:unless="${admin}"><nav th:replace="~{fragments :: shopNav('books')}"></nav></th:block>
+<div class="container"><div class="card">
+ <th:block th:if="${admin}"><nav th:replace="~{fragments :: adminBreadcrumbs('资源管理','/admin/books',null)}"></nav></th:block>
+ <th:block th:unless="${admin}"><nav th:replace="~{fragments :: readerBreadcrumbs('资源浏览','/shop/books',null)}"></nav></th:block>
+ <div th:replace="~{fragments :: alert}"></div>
+ <h2 th:text="${admin} ? '资源管理' : '查找学习资源'"></h2>
+ <p class="form-help" th:unless="${admin}">勾选多个条件，查看所有匹配资源；也可从学习书单开始阅读。</p>
+ <form th:action="@{${base}}" method="get" class="catalog-filters" th:object="${q}">
+  <div class="filter-search">
+   <select th:field="*{field}" aria-label="搜索范围"><option value="all">综合</option><option value="title">名称</option><option value="author">作者</option><option value="publisher">来源／出版社</option><option value="identifier">ISBN／DOI（精确）</option></select>
+   <input type="text" th:field="*{keyword}" placeholder="输入关键词" aria-label="搜索关键词">
+   <button class="btn btn-primary">搜索</button>
+   <a class="btn" th:href="@{${base}}">清除条件</a>
+   <a th:if="${admin}" class="btn btn-success" th:href="@{/admin/books/add}">＋新增资源</a>
+  </div>
+  <p class="form-help">多选规则：满足任一已选条件即显示。例如“计算机与信息＋外文”包含所有计算机资源和所有外文资源。关键词在这些结果中继续搜索。</p>
+  <fieldset class="category-filter"><legend>学科分类（可多选）</legend>
+   <label th:each="c : ${categories}"><input type="checkbox" name="categoryIds" th:value="${c.id}" th:checked="${q.categoryIds.contains(c.id) or q.categoryId == c.id}"><span th:text="${c.name}"></span></label>
+   <label><input type="checkbox" name="categoryIds" value="0" th:checked="${q.categoryIds.contains(0L) or q.categoryId == 0L}">待分类</label>
+  </fieldset>
+  <fieldset class="category-filter"><legend>资源类型（可多选）</legend><label th:each="t : ${resourceTypes}"><input type="checkbox" th:field="*{resourceTypes}" th:value="${t}"><span th:text="${t}"></span></label></fieldset>
+  <fieldset class="category-filter"><legend>语言（可多选）</legend><label th:each="l : ${languages}"><input type="checkbox" th:field="*{languages}" th:value="${l}"><span th:text="${l}"></span></label><label><input type="checkbox" th:field="*{languages}" value="未填写">未填写</label></fieldset>
+  <div class="filter-search"><button class="btn btn-primary">应用所选条件</button><span class="form-help">未勾选表示全部；清除条件可重置筛选。</span></div>
+  <div class="filter-search">
+   <label for="sort">排序</label><select th:field="*{sort}" onchange="this.form.submit()"><option value="newest">最新添加</option><option value="priceAsc">图书价格从低到高</option><option value="priceDesc">图书价格从高到低</option></select>
+   <th:block th:if="${admin}">
+    <label for="stockStatus">库存状态</label><select th:field="*{stockStatus}" onchange="this.form.submit()"><option value="all">全部</option><option value="low">库存偏低</option><option value="empty">缺货</option></select>
+    <span class="form-help" th:text="${'仅图书预警：1～' + threshold + '本为偏低，0本为缺货'}"></span>
+   </th:block>
+  </div>
+ </form>
+ <p class="result-summary">共找到 <strong th:text="${pageResult.total}"></strong> 条资源</p>
+ <div class="table-scroll"><table class="list">
+ <thead><tr><th>序号</th><th>名称／类型</th><th>作者</th><th>类别</th><th>单价（元）</th><th>库存</th><th>操作</th></tr></thead>
+ <tbody><tr th:each="b,row : ${pageResult.records}">
+  <td th:text="${(pageResult.page - 1) * pageResult.size + row.count}"></td><td><a th:href="@{${base + '/' + b.id}}" th:text="${b.title}"></a><div class="form-help"><span th:text="${b.resourceType}"></span> · <span th:text="${#strings.isEmpty(b.language)} ? '语言未填写' : ${b.language}"></span></div></td><td th:text="${b.author}"></td><td th:text="${b.categoryName}"></td>
+  <td th:text="${b.purchasable} ? ${#numbers.formatDecimal(b.price,1,2)} : '不售卖'"></td>
+  <td><span th:unless="${b.purchasable}">不适用</span><th:block th:if="${b.purchasable}"><span th:text="${b.stock}"></span> 本
+   <span th:if="${b.stock == 0}" class="badge badge-danger">缺货</span>
+   <span th:if="${admin and b.stock > 0 and b.stock <= threshold}" class="badge badge-warning">库存偏低</span>
+   <span th:if="${admin and b.stock > threshold}" class="badge badge-ok">库存正常</span>
+  </th:block></td>
+  <td><div class="row-actions" th:if="${admin}">
+   <a class="btn btn-sm" th:href="@{/admin/books/{id}/edit(id=${b.id})}">编辑</a>
+   <form th:action="@{/admin/books/{id}/delete(id=${b.id})}" method="post" onsubmit="return confirm('删除资源并清理书单和购物车中的关联？历史订单会保留。')"><button class="btn btn-sm btn-danger">删除</button></form>
+  </div><div class="row-actions" th:unless="${admin}">
+   <span th:unless="${b.purchasable}" class="badge">仅供浏览</span><form th:if="${b.purchasable}" th:action="@{/shop/cart/add}" method="post" class="inline-form">
+    <input type="hidden" name="bookId" th:value="${b.id}"><input class="qty-input" type="number" name="quantity" value="1" min="1" th:max="${b.stock}" th:disabled="${b.stock == 0}" aria-label="购买数量">
+    <button class="btn btn-sm btn-primary" th:disabled="${b.stock == 0}">加入购物车</button>
+   </form><a class="btn btn-sm" th:href="@{/shop/reading-lists/choose(bookId=${b.id})}">加入书单</a>
+  </div></td>
+ </tr><tr th:if="${pageResult.records.isEmpty()}"><td colspan="7" class="empty">没有找到相关资源，请调整筛选条件或清除条件。</td></tr></tbody></table></div>
+ <div th:replace="~{catalog/pager :: pager(${base},${q},${pageResult})}"></div>
+</div></div></body></html>

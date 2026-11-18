@@ -19,6 +19,7 @@
 
     <properties>
         <java.version>21</java.version>
+        <bookshop.build.directory>target</bookshop.build.directory>
         <mybatis-spring-boot.version>3.0.4</mybatis-spring-boot.version>
         <springdoc-openapi.version>2.5.0</springdoc-openapi.version>
     </properties>
@@ -64,6 +65,7 @@
     </dependencies>
 
     <build>
+        <directory>${bookshop.build.directory}</directory>
         <plugins>
             <plugin>
                 <groupId>org.springframework.boot</groupId>

@@ -1,0 +1,6 @@
+<!DOCTYPE html><html xmlns:th="http://www.thymeleaf.org"><body>
+<div th:fragment="pager(base,q,result)" class="pager" th:if="${result.totalPages > 1}">
+ 第 <span th:text="${result.page}"></span> / <span th:text="${result.totalPages}"></span> 页
+ <a th:if="${result.page > 1}" th:href="@{${base}(page=${result.page - 1},keyword=${q.keyword},field=${q.field},categoryId=${q.categoryId},categoryIds=${q.categoryIds},resourceTypes=${q.resourceTypes},languages=${q.languages},sort=${q.sort},stockStatus=${q.stockStatus})}">上一页</a>
+ <a th:if="${result.page < result.totalPages}" th:href="@{${base}(page=${result.page + 1},keyword=${q.keyword},field=${q.field},categoryId=${q.categoryId},categoryIds=${q.categoryIds},resourceTypes=${q.resourceTypes},languages=${q.languages},sort=${q.sort},stockStatus=${q.stockStatus})}">下一页</a>
+</div></body></html>

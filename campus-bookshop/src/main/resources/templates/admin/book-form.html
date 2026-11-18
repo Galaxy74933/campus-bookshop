@@ -1,44 +1,35 @@
 <!DOCTYPE html>
 <html xmlns:th="http://www.thymeleaf.org">
-<head th:replace="~{fragments :: head(${isEdit} ? '编辑图书 - 后台' : '新增图书 - 后台')}"></head>
-<body>
+<head th:replace="~{fragments :: head(${isEdit} ? '编辑资源' : '新增资源')}"></head><body>
 <nav th:replace="~{fragments :: adminNav('books')}"></nav>
-<div class="container">
-    <div class="card" style="max-width: 520px; margin: 24px auto;">
-        <nav th:replace="~{fragments :: adminBreadcrumbs('图书管理', '/admin/books', ${isEdit} ? '编辑图书' : '新增图书')}"></nav>
-        <h3 th:text="${isEdit} ? '编辑图书' : '新增图书'"></h3>
-        <div th:replace="~{fragments :: alert}"></div>
-        <form th:action="${isEdit} ? @{/admin/books/{id}(id=${bookForm.id})} : @{/admin/books}"
-              method="post" th:object="${bookForm}">
-            <div class="form-group">
-                <label>书名 *</label>
-                <input type="text" th:field="*{title}" placeholder="请输入书名">
-            </div>
-            <div class="form-group">
-                <label>作者</label>
-                <input type="text" th:field="*{author}" placeholder="请输入作者（选填）">
-            </div>
-            <div class="form-group">
-                <label>单价（元）*</label>
-                <input type="number" th:field="*{price}" step="0.01" min="0.01" placeholder="如 59.90">
-            </div>
-            <div class="form-group">
-                <label>库存数量 *</label>
-                <input type="number" th:field="*{stock}" min="0" step="1" placeholder="请输入库存数量">
-            </div>
-            <fieldset class="relation-options">
-                <legend>关联课程（可多选）</legend>
-                <p class="form-help">可以暂不关联；取消勾选并保存即可解除关联。</p>
-                <p th:if="${courses.isEmpty()}" class="form-help">暂无课程，可先保存图书，再去<a th:href="@{/admin/courses/add}">新增课程</a>。</p>
-                <label class="checkbox-option" th:each="c : ${courses}">
-                    <input type="checkbox" th:field="*{courseIds}" th:value="${c.id}">
-                    <span th:text="${c.name}"></span>
-                </label>
-            </fieldset>
-            <button type="submit" class="btn btn-primary" th:text="${isEdit} ? '保存修改' : '创建图书'"></button>
-            <a class="btn" th:href="@{/admin/books}">返回列表</a>
-        </form>
-    </div>
+<div class="container"><div class="card resource-form">
+<nav th:replace="~{fragments :: adminBreadcrumbs('资源管理','/admin/books',${isEdit} ? '编辑资源' : '新增资源')}"></nav>
+<h2 th:text="${isEdit} ? '编辑资源' : '新增资源'"></h2>
+<p class="form-help">带 * 的项目为必填。只有图书可以购买；论文、期刊等资源仅供浏览。</p>
+<div th:replace="~{fragments :: alert}"></div>
+<form th:action="${isEdit} ? @{/admin/books/{id}(id=${bookForm.id})} : @{/admin/books}" method="post" th:object="${bookForm}">
+<div class="alert alert-error" th:if="${#fields.hasAnyErrors()}"><p th:each="err : ${#fields.allErrors()}" th:text="${err}"></p></div>
+<h3>基本信息</h3>
+<div class="form-group"><label for="title">资源名称 *</label><input type="text" th:field="*{title}" maxlength="200" required placeholder="书名、论文题名或期刊名称"></div>
+<div class="form-grid">
+<div class="form-group"><label for="resourceType">资源类型 *</label><select th:field="*{resourceType}" required><option th:each="t : ${resourceTypes}" th:value="${t}" th:text="${t}"></option></select></div>
+<div class="form-group"><label for="categoryId">主分类 *</label><select th:field="*{categoryId}" required><option value="">请选择主分类</option><option th:each="c : ${categories}" th:value="${c.id}" th:text="${c.name}"></option></select></div>
 </div>
-</body>
-</html>
+<fieldset class="category-filter"><legend>附加分类（选填，可多选）</legend><label th:each="c : ${categories}"><input type="checkbox" th:field="*{categoryIds}" th:value="${c.id}"><span th:text="${c.name}"></span></label></fieldset>
+<p class="form-help">主分类代表资源的主要领域，交叉学科可选择附加分类。可到<a th:href="@{/admin/categories}">分类管理</a>维护分类。</p>
+<section id="saleFields"><h3>销售信息（仅图书必填）</h3><div class="form-grid">
+<div class="form-group"><label for="price">单价（元）*</label><input type="number" th:field="*{price}" min="0.01" max="99999999.99" step="0.01" th:required="${bookForm.resourceType == '图书'}"></div>
+<div class="form-group"><label for="stock">库存数量 *</label><input type="number" th:field="*{stock}" min="0" max="2147483647" step="1" th:required="${bookForm.resourceType == '图书'}"></div></div></section>
+<p id="browseOnly" class="form-help" hidden>该资源仅供浏览，无需填写价格与库存。</p>
+<h3>补充信息（均为选填）</h3>
+<div class="form-grid">
+<div class="form-group"><label for="author">作者</label><input th:field="*{author}" maxlength="100" placeholder="多位作者可用顿号分隔"></div>
+<div class="form-group"><label for="authorUnit">作者单位</label><input th:field="*{authorUnit}" maxlength="200"></div>
+<div class="form-group"><label for="language">语言</label><select th:field="*{language}"><option value="">未填写</option><option th:each="l : ${languages}" th:value="${l}" th:text="${l}"></option></select></div>
+<div class="form-group"><label for="publisher">来源／出版社</label><input th:field="*{publisher}" maxlength="200" placeholder="出版社、期刊名或发布机构"></div>
+<div class="form-group"><label for="publishDate">出版／发表日期</label><input type="date" th:field="*{publishDate}"></div>
+<div class="form-group"><label for="identifier">ISBN／DOI</label><input th:field="*{identifier}" maxlength="200" placeholder="按资源类型填写对应标识"></div>
+</div>
+<div class="form-group"><label for="description">内容简介</label><textarea th:field="*{description}" maxlength="2000" rows="5" placeholder="介绍资源内容和适用读者"></textarea></div>
+<button type="submit" class="btn btn-primary" th:text="${isEdit} ? '保存修改' : '创建资源'"></button><a class="btn" th:href="@{/admin/books}">返回列表</a>
+</form></div></div><script th:src="@{/js/resource-form.js}"></script></body></html>

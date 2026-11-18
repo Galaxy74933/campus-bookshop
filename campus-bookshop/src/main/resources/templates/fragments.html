@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title th:text="${title}">网上购书系统</title>
-    <link th:href="@{/css/style.css(v='academic-2')}" rel="stylesheet">
+    <link th:href="@{/css/style.css(v='resource-details-3')}" rel="stylesheet">
 </head>
 <body>
 <nav th:fragment="breadcrumbs(entryLabel, entryUrl, currentLabel)" class="breadcrumbs" aria-label="当前位置">
@@ -40,6 +40,21 @@
         </li>
     </ol>
 </nav>
+<nav th:fragment="readerBreadcrumbs(sectionLabel, sectionUrl, currentLabel)" class="breadcrumbs" aria-label="当前位置">
+    <ol>
+        <li><a th:href="@{/}">主界面</a></li>
+        <li><span class="breadcrumb-separator" aria-hidden="true">&gt;</span><a th:href="@{/reader/entry}">读者入口</a></li>
+        <li>
+            <span class="breadcrumb-separator" aria-hidden="true">&gt;</span>
+            <a th:if="${currentLabel != null}" th:href="@{${sectionUrl}}" th:text="${sectionLabel}"></a>
+            <span th:if="${currentLabel == null}" aria-current="page" th:text="${sectionLabel}"></span>
+        </li>
+        <li th:if="${currentLabel != null}">
+            <span class="breadcrumb-separator" aria-hidden="true">&gt;</span>
+            <span aria-current="page" th:text="${currentLabel}"></span>
+        </li>
+    </ol>
+</nav>
 
 <div th:fragment="alert">
     <div class="alert alert-success" th:if="${msg}" th:text="${msg}"></div>
@@ -47,8 +62,9 @@
 </div>
 
 <nav th:fragment="shopNav(active)" class="navbar">
-    <span class="brand">📚 网上书城</span>
-    <a th:href="@{/shop/books}" th:classappend="${active == 'books'} ? 'active'">图书浏览</a>
+    <span class="brand">📚 校园学习书店</span>
+    <a th:href="@{/shop/books}" th:classappend="${active == 'books'} ? 'active'">资源浏览</a>
+    <a th:href="@{/shop/reading-lists}" th:classappend="${active == 'reading'} ? 'active'">学习书单</a>
     <a th:href="@{/shop/cart}" th:classappend="${active == 'cart'} ? 'active'">购物车</a>
     <a th:href="@{/shop/orders}" th:classappend="${active == 'orders'} ? 'active'">我的订单</a>
     <span class="spacer"></span>
@@ -60,11 +76,10 @@
 </nav>
 
 <nav th:fragment="adminNav(active)" class="navbar">
-    <span class="brand">🛠 图书管理系统</span>
-    <a th:href="@{/admin/books}" th:classappend="${active == 'books'} ? 'active'">图书管理</a>
-    <a th:href="@{/admin/majors}" th:classappend="${active == 'majors'} ? 'active'">专业管理</a>
-    <a th:href="@{/admin/courses}" th:classappend="${active == 'courses'} ? 'active'">课程管理</a>
-    <a th:href="@{/admin/academic-overview}" th:classappend="${active == 'overview'} ? 'active'">专业课程总览</a>
+    <span class="brand">🛠 资源管理系统</span>
+    <a th:href="@{/admin/books}" th:classappend="${active == 'books'} ? 'active'">资源管理</a>
+    <a th:href="@{/admin/categories}" th:classappend="${active == 'categories'} ? 'active'">分类管理</a>
+    <a th:href="@{/admin/reading-lists}" th:classappend="${active == 'reading'} ? 'active'">书单管理</a>
     <span class="spacer"></span>
     <span class="nav-user" th:if="${loginUser != null}" th:text="'管理员：' + ${loginUser.username}"></span>
     <a th:href="@{/admin/logout}">退出登录</a>

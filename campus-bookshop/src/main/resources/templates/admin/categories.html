@@ -1,0 +1,20 @@
+<!DOCTYPE html><html xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments :: head('分类管理 - 校园学习书店')}"></head><body>
+<nav th:replace="~{fragments :: adminNav('categories')}"></nav>
+<div class="container"><div class="card">
+<nav th:replace="~{fragments :: adminBreadcrumbs('分类管理','/admin/categories',null)}"></nav>
+<h2>学科分类</h2><p class="form-help">每条资源选择一个主分类，也可添加多个附加分类。被资源使用的分类须先解除关联才能删除。</p>
+<div th:replace="~{fragments :: alert}"></div>
+<form th:action="@{/admin/categories}" method="post" class="toolbar search-form">
+ <input type="text" name="name" maxlength="100" required placeholder="新增分类名称" aria-label="新增分类名称"><button class="btn btn-success">新增分类</button>
+</form>
+<div class="table-scroll"><table class="list"><thead><tr><th>序号</th><th>分类名称</th><th>资源数量</th><th>操作</th></tr></thead>
+<tbody><tr th:each="c,row : ${categories}">
+ <td th:text="${row.count}"></td><td>
+  <form th:action="@{/admin/categories}" method="post" class="filter-search"><input type="hidden" name="id" th:value="${c.id}">
+   <input type="text" name="name" th:value="${c.name}" maxlength="100" required aria-label="分类名称"><button class="btn btn-sm">保存名称</button>
+  </form></td>
+ <td><a th:href="@{/admin/books(categoryId=${c.id})}" th:text="${c.bookCount}"></a></td>
+ <td><form th:action="@{/admin/categories/{id}/delete(id=${c.id})}" method="post" onsubmit="return confirm('确定删除这个分类吗？')"><button class="btn btn-sm btn-danger">删除</button></form></td>
+</tr><tr th:if="${categories.isEmpty()}"><td colspan="4" class="empty">暂无分类，请先新增。</td></tr></tbody></table></div>
+</div></div></body></html>
