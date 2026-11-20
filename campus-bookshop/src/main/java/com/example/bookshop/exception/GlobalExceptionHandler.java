@@ -13,6 +13,11 @@ import java.net.URI;
  */
 @ControllerAdvice
 public class GlobalExceptionHandler {
+    @ExceptionHandler(org.springframework.web.multipart.MaxUploadSizeExceededException.class)
+    public String uploadTooLarge(RedirectAttributes ra) {
+        ra.addFlashAttribute("error","文件过大，请上传不超过 5 MB 的 .xlsx 文件");
+        return "redirect:/admin/books/import";
+    }
     @ExceptionHandler(org.springframework.web.server.ResponseStatusException.class)
     public String handleStatus(org.springframework.web.server.ResponseStatusException e, Model model,
                                jakarta.servlet.http.HttpServletResponse response) {

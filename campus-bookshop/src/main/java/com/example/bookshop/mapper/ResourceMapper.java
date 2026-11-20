@@ -4,6 +4,10 @@ import org.apache.ibatis.annotations.*;
 import java.util.List;
 @Mapper
 public interface ResourceMapper {
+    @Select("SELECT id FROM t_category ORDER BY id FOR UPDATE")
+    List<Long> lockImportCategories();
+    @Select("SELECT COUNT(*) FROM t_book b LEFT JOIN t_resource_info r ON r.book_id=b.id WHERE (#{identifier} != '' AND LOWER(TRIM(r.identifier))=LOWER(#{identifier})) OR (LOWER(TRIM(b.title))=LOWER(#{title}) AND LOWER(TRIM(COALESCE(b.author,'')))=LOWER(#{author}) AND COALESCE(r.resource_type,'图书')=#{resourceType})")
+    int importDuplicates(Book book);
     @Delete("DELETE FROM t_resource_info WHERE book_id=#{id}") int clearInfo(Long id);
     @Insert("INSERT INTO t_resource_info(book_id,resource_type,language,author_unit,publisher,publish_date,identifier,description) VALUES(#{id},#{resourceType},#{language},#{authorUnit},#{publisher},#{publishDate},#{identifier},#{description})")
     int insertInfo(Book book);

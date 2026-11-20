@@ -1,0 +1,24 @@
+<!DOCTYPE html><html xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments :: head('Excel 导入资源')}"></head><body>
+<nav th:replace="~{fragments :: adminNav('books')}"></nav>
+<div class="container"><div class="card">
+ <nav th:replace="~{fragments :: adminBreadcrumbs('资源管理','/admin/books','Excel 导入')}"></nav>
+ <h2>Excel 导入资源</h2>
+ <div th:replace="~{fragments :: alert}"></div>
+ <ul th:if="${importErrors != null}" class="import-errors"><li th:each="e : ${importErrors}" th:text="${e}"></li></ul>
+ <div class="row-actions"><a class="btn" th:href="@{/admin/books/import/template}">下载空白模板</a><a class="btn" th:href="@{/admin/books/import/demo}">下载演示 Excel（20 条）</a></div>
+ <form th:action="@{/admin/books/import}" method="post" enctype="multipart/form-data" class="import-form" onsubmit="this.querySelector('button').disabled=true;this.querySelector('button').textContent='正在导入…'">
+  <label for="import-file">选择 Excel 文件</label>
+  <input id="import-file" type="file" name="file" accept=".xlsx" required>
+  <button class="btn btn-primary">开始导入</button>
+ </form>
+ <p>仅支持 .xlsx，每次最多 500 条、5 MB。全部检查通过后才会导入。</p>
+ <table class="list"><thead><tr><th>字段</th><th>填写要求</th></tr></thead><tbody>
+  <tr><td>资源名称、资源类型、主分类</td><td>所有资源必填；分类填写下方现有名称。</td></tr>
+  <tr><td>价格、库存</td><td>图书必填：价格大于 0，最多两位小数；库存为非负整数。其他类型留空。</td></tr>
+  <tr><td>附加分类</td><td>选填，多个名称用分号分隔。</td></tr>
+  <tr><td>出版日期、ISBN/DOI</td><td>选填，日期格式为 yyyy-MM-dd；ISBN/DOI 建议将单元格设为文本。</td></tr>
+  <tr><td>其他信息</td><td>选填；不支持公式。重复资源会提示行号，不覆盖已有内容。</td></tr>
+ </tbody></table>
+ <p><strong>可用分类：</strong><span th:each="c,s : ${categories}" th:text="${c.name + (s.last ? '' : '、')}"></span></p>
+</div></div></body></html>

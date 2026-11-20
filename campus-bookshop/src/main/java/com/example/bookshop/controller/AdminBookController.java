@@ -9,16 +9,19 @@ import org.springframework.ui.Model;
 import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
+import com.example.bookshop.interceptor.AuthInterceptor;
 @Controller
 @RequestMapping("/admin")
 public class AdminBookController {
     private final BookService books;
     private final CategoryService categories;
-    public AdminBookController(BookService books,CategoryService categories) { this.books=books; this.categories=categories; }
+    private final ImportBatchService batches;
+    public AdminBookController(BookService books,CategoryService categories,ImportBatchService batches) { this.books=books; this.categories=categories; this.batches=batches; }
     @GetMapping public String home() { return "redirect:/admin/books"; }
     @GetMapping("/books")
-    public String list(@ModelAttribute("q") BookQuery q,Model model) {
-        model.addAttribute("pageResult",books.search(q,10,true));
+    public String list(@ModelAttribute("q") BookQuery q,Model model,@SessionAttribute(AuthInterceptor.SESSION_KEY) LoginUser user) {
+        model.addAttribute("latestImport",batches.latest(user.getId()));
+        model.addAttribute("pageResult",books.search(q,q.getSize(),true));
         model.addAttribute("categories",categories.list());
         model.addAttribute("threshold",books.threshold());
         model.addAttribute("admin",true); model.addAttribute("base","/admin/books");
@@ -45,9 +48,19 @@ public class AdminBookController {
         catch(BizException e) { m.addAttribute("error",e.getMessage()); return form(m,id!=null); }
         ra.addFlashAttribute("msg","资源已保存"); return "redirect:/admin/books";
     }
-    @PostMapping("/books/{id}/delete") public String delete(@PathVariable Long id,RedirectAttributes ra) {
+    @PostMapping("/books/{id}/delete") public String delete(@PathVariable Long id,@ModelAttribute BookQuery q,
+            @RequestParam(defaultValue="0") long scrollY,RedirectAttributes ra) {
         try { books.delete(id); ra.addFlashAttribute("msg","图书已删除，历史订单保留"); }
         catch(BizException e) { ra.addFlashAttribute("error",e.getMessage()); }
+        books.search(q,q.getSize(),true); // Clamp the page after deleting its last row.
+        ra.addAttribute("page",q.getPage()); ra.addAttribute("size",q.getSize());
+        ra.addAttribute("keyword",q.getKeyword()); ra.addAttribute("field",q.getField());
+        ra.addAttribute("sort",q.getSort()); ra.addAttribute("stockStatus",q.getStockStatus());
+        if(q.getCategoryId()!=null) ra.addAttribute("categoryId",q.getCategoryId());
+        if(!q.getCategoryIds().isEmpty()) ra.addAttribute("categoryIds",q.getCategoryIds());
+        if(!q.getResourceTypes().isEmpty()) ra.addAttribute("resourceTypes",q.getResourceTypes());
+        if(!q.getLanguages().isEmpty()) ra.addAttribute("languages",q.getLanguages());
+        ra.addFlashAttribute("restoreScrollY",Math.max(0,Math.min(scrollY,1000000)));
         return "redirect:/admin/books";
     }
 }

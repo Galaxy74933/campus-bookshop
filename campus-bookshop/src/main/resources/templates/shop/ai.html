@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="zh-CN">
+<head th:replace="~{fragments :: head('AI 选书助手')}"></head>
+<body>
+<nav th:replace="~{fragments :: shopNav('ai')}"></nav>
+<main class="container"><div class="card ai-panel">
+    <nav th:replace="~{fragments :: readerBreadcrumbs('AI 选书助手','/shop/ai',null)}"></nav>
+    <h2>AI 选书助手</h2>
+    <div th:replace="~{fragments :: alert}"></div>
+    <section class="ai-section">
+        <h3>1. 配置自己的 DeepSeek API</h3>
+        <p>密钥状态：<strong th:text="${configured} ? '已配置（仅当前登录会话）' : '尚未配置'"></strong></p>
+        <p class="form-help">本机运行时，密钥仅交给你本机的 Java 后端，并用于请求 DeepSeek 官方接口，不会发送给项目作者。不写入数据库、日志或源码；退出登录、会话失效或服务重启后需重新填写。</p>
+        <div class="ai-key-form">
+            <label for="api-key">API 密钥</label>
+            <input id="api-key" form="ai-recommend" name="apiKey" type="password" autocomplete="new-password" minlength="16" maxlength="256" th:required="${!configured}" th:placeholder="${configured} ? '已配置，留空沿用；填写新密钥可更换' : '请填写密钥'">
+            <a href="https://platform.deepseek.com/" target="_blank" rel="noopener noreferrer">前往 DeepSeek 开放平台</a>
+        </div>
+        <form th:if="${configured}" th:action="@{/shop/ai/clear}" method="post" class="ai-clear">
+            <input type="hidden" name="csrf" th:value="${csrf}"><button class="btn" type="submit">清除密钥与推荐记录</button>
+        </form>
+    </section>
+    <section class="ai-section">
+        <h3>2. 描述选书需求</h3>
+        <form id="ai-recommend" th:action="@{/shop/ai/recommend}" method="post">
+            <input type="hidden" name="csrf" th:value="${csrf}">
+            <label for="need">学习需求</label>
+            <textarea id="need" name="need" rows="4" maxlength="1000" required th:text="${need}" placeholder="例如：学过一点 Java，想做网上书店项目，请推荐中文资源，偏向项目实践。"></textarea>
+            <label for="budget">总预算（可选，元）</label>
+            <input id="budget" name="budget" type="number" min="0" max="1000000" step="0.01" th:value="${budget}" placeholder="例如 150">
+            <p class="form-help">预算按推荐图书各一本合计，单独填写的金额优先于文字中的预算。其他资源仅供加入书单。未单独填写时尝试从需求识别预算，请核对结果。</p>
+            <button id="generate" class="btn btn-primary" type="submit">生成推荐</button>
+            <span id="ai-loading" role="status" hidden>正在生成推荐，请稍候…</span>
+        </form>
+    </section>
+    <section th:if="${result != null}" class="ai-section">
+        <h3>3. 推荐结果</h3>
+        <p th:text="${result.summary}"></p>
+        <p th:if="${result.limited}" class="form-help">当前仅使用目录前 100 条资源作为候选，并非完整资源库。</p>
+        <p>图书合计：<strong th:text="${result.total}"></strong> 元（各一本）<span th:if="${result.budget != null}">；本次预算：<b th:text="${result.budget}"></b> 元</span><span th:if="${result.language != null}">；识别语言要求：<b th:text="${result.language}"></b></span></p>
+        <p class="form-help">价格和库存为生成时数据，购买时重新核验。AI 仅依据资源简介等元数据，未读取全文；请检查其理解是否符合你的需求。</p>
+        <div class="ai-result" th:each="item,stat : ${result.items}">
+            <h3><span th:text="${stat.count + '. '}"></span><span th:text="${item.book.title}"></span></h3>
+            <p><span th:text="${item.book.resourceType}"></span> · <span th:text="${item.book.categoryName}"></span> · <span th:text="${#strings.isEmpty(item.book.language) ? '语言未填写' : item.book.language}"></span></p>
+            <p th:text="${item.reason}"></p>
+            <p th:if="${item.book.purchasable}">价格：<b th:text="${item.book.price}"></b> 元 · 库存：<span th:text="${item.book.stock}"></span></p>
+            <p th:unless="${item.book.purchasable}">此资源不可购买，可加入学习书单。</p>
+            <div class="row-actions">
+                <a class="btn" th:href="@{/shop/books/{id}(id=${item.book.id},source='ai')}">查看详情</a>
+                <a class="btn" th:href="@{/shop/reading-lists/choose(bookId=${item.book.id},source='ai')}">加入已有书单</a>
+                <form th:if="${item.book.purchasable}" th:action="@{/shop/cart/add}" method="post" class="inline-form">
+                    <input type="hidden" name="source" value="ai">
+                    <input type="hidden" name="bookId" th:value="${item.book.id}"><input type="hidden" name="quantity" value="1"><button class="btn" type="submit">加入购物车</button>
+                </form>
+            </div>
+        </div>
+        <form th:if="${!#lists.isEmpty(result.items)}" th:action="@{/shop/ai/save}" method="post" class="ai-save">
+            <input type="hidden" name="csrf" th:value="${csrf}">
+            <h3>保存为新的个人学习书单</h3>
+            <label class="ai-choice" th:each="item : ${result.items}"><input type="checkbox" name="selected" th:value="${item.book.id}" checked><span th:text="${item.book.title}"></span></label>
+            <label for="list-name">书单名称</label><input id="list-name" name="name" maxlength="100" required placeholder="例如：我的 Java 学习计划">
+            <button class="btn btn-primary" type="submit">保存所选资源</button>
+        </form>
+    </section>
+</div></main>
+<script th:src="@{/js/ai-recommend.js}"></script>
+</body></html>

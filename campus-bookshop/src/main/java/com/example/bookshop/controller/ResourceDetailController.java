@@ -11,6 +11,7 @@ public class ResourceDetailController {
     @GetMapping({"/admin/books/{id}","/shop/books/{id}"})
     public String detail(@PathVariable Long id,HttpServletRequest request,Model model){
         boolean admin=request.getRequestURI().startsWith("/admin/");
+        model.addAttribute("fromAi",!admin && "ai".equals(request.getParameter("source")));
         model.addAttribute("book",books.findById(id)); model.addAttribute("admin",admin);
         model.addAttribute("base",admin?"/admin/books":"/shop/books");
         return "catalog/detail";

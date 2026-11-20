@@ -1,13 +1,15 @@
 <!DOCTYPE html><html xmlns:th="http://www.thymeleaf.org">
 <head th:replace="~{fragments :: head('加入学习书单')}"></head><body>
 <th:block th:if="${admin}"><nav th:replace="~{fragments :: adminNav('reading')}"></nav></th:block>
-<th:block th:unless="${admin}"><nav th:replace="~{fragments :: shopNav('reading')}"></nav></th:block>
+<th:block th:unless="${admin}"><nav th:replace="~{fragments :: shopNav(${fromAi ? 'ai' : 'reading'})}"></nav></th:block>
 <div class="container"><div class="card">
 <th:block th:if="${admin}"><nav th:replace="~{fragments :: adminBreadcrumbs('书单管理',${base},'加入书单')}"></nav></th:block>
-<th:block th:unless="${admin}"><nav th:replace="~{fragments :: readerBreadcrumbs('图书浏览','/shop/books','加入书单')}"></nav></th:block>
+<th:block th:unless="${admin}"><nav th:replace="~{fragments :: readerBreadcrumbs(${fromAi ? 'AI 选书助手' : '资源浏览'},${fromAi ? '/shop/ai' : '/shop/books'},'加入书单')}"></nav></th:block>
 <h2>选择书单</h2><p>将《<span th:text="${book.title}"></span>》加入以下书单：</p>
-<div th:each="r : ${lists}" class="toolbar">
-<span th:text="${r.name}"></span><form th:action="@{${base + '/' + r.id + '/books'}}" method="post"><input type="hidden" name="bookId" th:value="${book.id}"><button class="btn btn-primary">加入此书单</button></form>
+<p th:unless="${admin}" class="form-help">以下是你可以编辑的个人书单（共 <span th:text="${lists.size()}"></span> 个）。管理员公开书单只供浏览，不在此处显示。</p>
+<div th:replace="~{fragments :: alert}"></div>
+<div th:each="r : ${lists}" class="reading-choice">
+<div><h3 th:text="${r.name}"></h3><p th:if="${!#strings.isEmpty(r.description)}" th:text="${r.description}"></p></div><form th:action="@{${base + '/' + r.id + '/books'}}" method="post"><input type="hidden" name="source" th:value="${fromAi ? 'ai' : 'books'}"><input type="hidden" name="bookId" th:value="${book.id}"><button class="btn btn-primary">加入此书单</button></form>
 </div>
 <p th:if="${lists.isEmpty()}" class="empty">还没有可用书单，请先创建书单，再从书单详情搜索并添加图书。</p>
 <a class="btn" th:href="@{${base + '/add'}}">创建书单</a>

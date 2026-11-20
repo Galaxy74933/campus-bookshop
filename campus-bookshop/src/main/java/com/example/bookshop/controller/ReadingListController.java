@@ -35,7 +35,7 @@ public class ReadingListController {
         LoginUser u=user(s); common(m,u); ReadingList r=lists.require(id,u,false);
         boolean editable=lists.editable(r,u);
         m.addAttribute("readingList",r); m.addAttribute("editable",editable); m.addAttribute("books",lists.books(id,u));
-        if(editable) m.addAttribute("pageResult",books.search(q,8,false));
+        if(editable) m.addAttribute("pageResult",books.search(q,q.getSize(),false));
         return "reading/detail";
     }
     @PostMapping({ "", "/{id}" })
@@ -51,17 +51,18 @@ public class ReadingListController {
     @PostMapping("/{id}/delete") public String delete(@PathVariable Long id,HttpSession s,RedirectAttributes ra) {
         LoginUser u=user(s); lists.delete(id,u); ra.addFlashAttribute("msg","书单已删除，图书保留"); return "redirect:"+base(u);
     }
-    @PostMapping("/{id}/books") public String addBook(@PathVariable Long id,@RequestParam Long bookId,HttpSession s,RedirectAttributes ra) {
+    @PostMapping("/{id}/books") public String addBook(@PathVariable Long id,@RequestParam Long bookId,@RequestParam(defaultValue="") String source,HttpSession s,RedirectAttributes ra) {
         LoginUser u=user(s);
         try { lists.add(id,bookId,u); ra.addFlashAttribute("msg","已加入书单"); }
         catch(BizException e) { ra.addFlashAttribute("error",e.getMessage()); }
-        return "redirect:"+base(u)+"/"+id;
+        return "ai".equals(source) && "READER".equals(u.getRole()) ? "redirect:/shop/ai" : "redirect:"+base(u)+"/"+id;
     }
     @PostMapping("/{id}/books/{bookId}/remove") public String remove(@PathVariable Long id,@PathVariable Long bookId,HttpSession s,RedirectAttributes ra) {
         LoginUser u=user(s); lists.remove(id,bookId,u); ra.addFlashAttribute("msg","已从书单移除"); return "redirect:"+base(u)+"/"+id;
     }
-    @GetMapping("/choose") public String choose(@RequestParam Long bookId,HttpSession s,Model m) {
+    @GetMapping("/choose") public String choose(@RequestParam Long bookId,@RequestParam(defaultValue="") String source,HttpSession s,Model m) {
         LoginUser u=user(s); common(m,u); m.addAttribute("book",books.findById(bookId));
+        m.addAttribute("fromAi","ai".equals(source) && "READER".equals(u.getRole()));
         m.addAttribute("lists",lists.visible(u).stream().filter(r -> lists.editable(r,u)).toList()); return "reading/choose";
     }
 }

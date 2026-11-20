@@ -23,6 +23,7 @@
 </tbody></table></div>
 <section th:if="${editable}"><h3 class="section-title">向书单添加资源</h3>
 <form th:action="@{${base + '/' + readingList.id}}" method="get" class="filter-search">
+<input type="hidden" name="size" th:value="${q.size}">
 <select name="field" aria-label="搜索范围"><option value="title" th:selected="${q.field == 'title'}">名称</option><option value="author" th:selected="${q.field == 'author'}">作者</option></select>
 <input type="text" name="keyword" th:value="${q.keyword}" placeholder="搜索已有资源" aria-label="搜索已有资源"><button class="btn btn-primary">搜索</button><a th:href="@{${base + '/' + readingList.id}}">清除条件</a></form>
 <div class="table-scroll"><table class="list"><thead><tr><th>名称</th><th>作者</th><th>类别</th><th>操作</th></tr></thead><tbody>

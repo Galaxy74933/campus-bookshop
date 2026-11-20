@@ -12,6 +12,9 @@ public class BookQuery {
     private List<String> resourceTypes = new ArrayList<>();
     private List<String> languages = new ArrayList<>();
     private int page = 1;
+    private int size = 10;
+    public int getSize() { return Set.of(10,20,50).contains(size) ? size : 10; }
+    public void setSize(int v) { size = v; }
     private int threshold = 5;
     public void normalize(int threshold, boolean admin) {
         keyword = keyword == null ? "" : keyword.trim();

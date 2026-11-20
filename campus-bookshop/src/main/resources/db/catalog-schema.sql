@@ -1,4 +1,20 @@
 -- Non-destructive upgrade: preserve existing books, orders and retired academic tables.
+CREATE TABLE IF NOT EXISTS t_import_batch (
+ id BIGINT AUTO_INCREMENT PRIMARY KEY,
+ owner_id BIGINT,
+ filename VARCHAR(255) NOT NULL,
+ resource_count INT NOT NULL,
+ created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+ undone_at DATETIME,
+ INDEX idx_import_owner(owner_id,id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+CREATE TABLE IF NOT EXISTS t_import_batch_book (
+ batch_id BIGINT NOT NULL,
+ book_id BIGINT NOT NULL,
+ PRIMARY KEY(batch_id,book_id),
+ CONSTRAINT fk_import_batch FOREIGN KEY(batch_id) REFERENCES t_import_batch(id),
+ CONSTRAINT fk_import_book FOREIGN KEY(book_id) REFERENCES t_book(id) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 CREATE TABLE IF NOT EXISTS t_category (
  id BIGINT AUTO_INCREMENT PRIMARY KEY,
  name VARCHAR(100) NOT NULL,

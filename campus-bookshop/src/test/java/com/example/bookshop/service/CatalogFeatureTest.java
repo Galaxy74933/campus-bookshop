@@ -42,9 +42,173 @@ class CatalogFeatureTest {
  @Autowired DataSource ds;
  @Autowired MockMvc mvc;
  LoginUser admin,reader,other;
+ @Autowired ResourceImportService importer;
+ @Autowired ImportBatchService batches;
+ @Test void undoOnlyImportedResourcesSkipsDeletedAndKeepsOrders() throws Exception {
+  Long original=book("原有资源",10);
+  importer.importFile(excel("导入甲","导入乙"),admin.getId());
+  var batch=batches.latest(admin.getId());
+  assertThat(batch.getFilename()).isEqualTo("test.xlsx");
+  assertThat(batch.getResourceCount()).isEqualTo(2);
+  Long first=jdbc.queryForObject("SELECT id FROM t_book WHERE title='导入甲'",Long.class);
+  Long second=jdbc.queryForObject("SELECT id FROM t_book WHERE title='导入乙'",Long.class);
+  books.delete(first);
+  books.update(second,form("导入后编辑",category(),3));
+  cartService.add(reader.getId(),second,1);
+  orders.checkout(reader.getId());
+  cartService.add(reader.getId(),second,1);
+  Long readingList=lists.save(null,"导入测试书单","",reader);
+  lists.add(readingList,second,reader);
+  new ResourceDatabasePopulator(new ClassPathResource("db/catalog-schema.sql")).execute(ds);
+  assertThat(batches.latest(admin.getId()).getId()).isEqualTo(batch.getId());
+  assertThat(batches.undo(batch.getId(),admin.getId())).isEqualTo(1);
+  assertThat(books.findById(original).getTitle()).isEqualTo("原有资源");
+  assertThat(jdbc.queryForObject("SELECT COUNT(*) FROM t_book",Integer.class)).isEqualTo(1);
+  assertThat(jdbc.queryForObject("SELECT COUNT(*) FROM t_cart_item",Integer.class)).isZero();
+  assertThat(lists.books(readingList,reader)).isEmpty();
+  assertThat(jdbc.queryForObject("SELECT COUNT(*) FROM t_order_item",Integer.class)).isEqualTo(1);
+  assertThat(batches.latest(admin.getId()).getUndoneAt()).isNotNull();
+  assertThatThrownBy(()->batches.undo(batch.getId(),admin.getId())).isInstanceOf(BizException.class).hasMessageContaining("已经撤回");
+ }
+ @Test void undoChecksOwnerLatestBatchAndReaderPermission() throws Exception {
+  importer.importFile(excel("第一批"),admin.getId());
+  Long first=batches.latest(admin.getId()).getId();
+  importer.importFile(excel("第二批"),admin.getId());
+  Long second=batches.latest(admin.getId()).getId();
+  assertThatThrownBy(()->batches.undo(first,admin.getId())).isInstanceOf(BizException.class).hasMessageContaining("最近一次");
+  assertThatThrownBy(()->batches.undo(second,other.getId())).isInstanceOf(BizException.class);
+  mvc.perform(post("/admin/books/import/"+second+"/undo").sessionAttr(AuthInterceptor.SESSION_KEY,reader)).andExpect(redirectedUrl("/admin/login"));
+  assertThat(page("/admin/books",admin)).contains("撤回最近一次导入","test.xlsx");
+  mvc.perform(post("/admin/books/import/"+second+"/undo").sessionAttr(AuthInterceptor.SESSION_KEY,admin)).andExpect(redirectedUrl("/admin/books"));
+  assertThat(jdbc.queryForObject("SELECT COUNT(*) FROM t_book",Integer.class)).isEqualTo(1);
+  assertThat(page("/admin/books",admin)).contains("（已撤回）").doesNotContain("撤回最近一次导入</button>");
+ }
+ @Test void undoFailureRollsBackAllDeletesAndBatchState() throws Exception {
+  importer.importFile(excel("事务甲","事务乙"),admin.getId());
+  Long id=batches.latest(admin.getId()).getId();
+  jdbc.execute("CREATE TABLE undo_guard (book_id BIGINT REFERENCES t_book(id))");
+  jdbc.update("INSERT INTO undo_guard SELECT id FROM t_book WHERE title='事务乙'");
+  try {
+   assertThatThrownBy(()->batches.undo(id,admin.getId())).isInstanceOf(RuntimeException.class);
+   assertThat(jdbc.queryForObject("SELECT COUNT(*) FROM t_book",Integer.class)).isEqualTo(2);
+   assertThat(batches.latest(admin.getId()).getUndoneAt()).isNull();
+  } finally { jdbc.execute("DROP TABLE undo_guard"); }
+ }
+ @Test void deleteRetainsFiltersScrollAndClampsEmptyLastPage() throws Exception {
+  Long last=null;
+  for(int i=0;i<11;i++) last=book("位置测试"+i,10);
+  mvc.perform(post("/admin/books/"+last+"/delete").sessionAttr(AuthInterceptor.SESSION_KEY,admin)
+    .param("page","2").param("size","10").param("keyword","位置测试").param("languages","未填写")
+    .param("categoryIds",category().toString()).param("scrollY","850"))
+    .andExpect(status().is3xxRedirection()).andExpect(flash().attribute("restoreScrollY",850L))
+    .andExpect(redirectedUrlPattern("/admin/books?page=1&size=10&keyword=*&field=title&sort=newest&stockStatus=all&categoryIds=*&languages=*"));
+  String html=page("/admin/books",admin);
+  assertThat(html).contains("name=\"scrollY\"","window.scrollY");
+ }
+ org.springframework.mock.web.MockMultipartFile excel(String... titles) throws Exception {
+  try(var wb=new org.apache.poi.xssf.usermodel.XSSFWorkbook();var out=new java.io.ByteArrayOutputStream()) {
+   var sheet=wb.createSheet("资源导入"); var header=sheet.createRow(0);
+   for(int i=0;i<ResourceImportService.HEADERS.size();i++) header.createCell(i).setCellValue(ResourceImportService.HEADERS.get(i));
+   for(int i=0;i<titles.length;i++) {
+    var row=sheet.createRow(i+1); row.createCell(0).setCellValue(titles[i]); row.createCell(1).setCellValue("图书");
+    row.createCell(2).setCellValue(categories.require(category()).getName());
+    row.createCell(11).setCellValue(25.50); row.createCell(12).setCellValue(3);
+   }
+   wb.write(out); return new org.springframework.mock.web.MockMultipartFile("file","test.xlsx","application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",out.toByteArray());
+  }
+ }
+ @Test void pageSizeOptionsWorkAndKeepFilters() throws Exception {
+  for(int i=0;i<25;i++) book("分页样例"+i,10);
+  for(int size:List.of(10,20,50)) {
+   var result=mvc.perform(get("/shop/books").param("size",""+size).param("keyword","分页").sessionAttr(AuthInterceptor.SESSION_KEY,reader))
+    .andExpect(status().isOk()).andReturn();
+   var p=(PageResult<?>)result.getModelAndView().getModel().get("pageResult");
+   assertThat(p.getSize()).isEqualTo(size); assertThat(p.getRecords()).hasSize(Math.min(size,25));
+   assertThat(result.getResponse().getContentAsString()).contains("每页条数","name=\"keyword\" value=\"分页\"");
+   if(size<25) assertThat(result.getResponse().getContentAsString()).contains("size="+size);
+  }
+  var result=mvc.perform(get("/admin/books").param("size","9999").param("page","999").sessionAttr(AuthInterceptor.SESSION_KEY,admin)).andReturn();
+  var p=(PageResult<?>)result.getModelAndView().getModel().get("pageResult");
+  assertThat(p.getSize()).isEqualTo(10); assertThat(p.getPage()).isEqualTo(3);
+ }
+ @Test void importDemoRoundTripAndRejectRepeatedUpload() throws Exception {
+  byte[] bytes=new ClassPathResource("import/demo.xlsx").getContentAsByteArray();
+  try(var wb=new org.apache.poi.xssf.usermodel.XSSFWorkbook(new java.io.ByteArrayInputStream(bytes))) {
+   assertThat(wb.getSheetAt(0).getLastRowNum()).isEqualTo(20);
+  }
+  var file=new org.springframework.mock.web.MockMultipartFile("file","demo.xlsx","application/octet-stream",bytes);
+  assertThat(importer.importFile(file)).isEqualTo(20);
+  assertThat(jdbc.queryForObject("SELECT COUNT(*) FROM t_book",Integer.class)).isEqualTo(20);
+  assertThat(jdbc.queryForObject("SELECT COUNT(*) FROM t_resource_info WHERE resource_type='图书'",Integer.class)).isEqualTo(16);
+  assertThat(jdbc.queryForObject("SELECT publish_date FROM t_resource_info WHERE identifier='DEMO-IMPORT-001'",java.sql.Date.class).toLocalDate()).isEqualTo(java.time.LocalDate.of(2025,1,1));
+  assertThatThrownBy(()->importer.importFile(file)).isInstanceOf(ResourceImportService.ImportException.class);
+  assertThat(jdbc.queryForObject("SELECT COUNT(*) FROM t_book",Integer.class)).isEqualTo(20);
+ }
+ @Test void importInvalidRowsRejectWholeBatchAndReportRows() throws Exception {
+  var file=excel("有效行","");
+  var error=catchThrowableOfType(()->importer.importFile(file),ResourceImportService.ImportException.class);
+  assertThat(error.getErrors()).anyMatch(s->s.contains("第 3 行"));
+  assertThat(jdbc.queryForObject("SELECT COUNT(*) FROM t_book",Integer.class)).isZero();
+  var duplicates=excel("重复","重复");
+  assertThatThrownBy(()->importer.importFile(duplicates)).isInstanceOf(ResourceImportService.ImportException.class);
+  assertThat(jdbc.queryForObject("SELECT COUNT(*) FROM t_book",Integer.class)).isZero();
+ }
+ @Test void importWriteFailureRollsBackEarlierRows() throws Exception {
+  var file=excel("可写入","拒绝写入");
+  jdbc.execute("ALTER TABLE t_book ADD CONSTRAINT import_failure_test CHECK (title <> '拒绝写入')");
+  try {
+   assertThatThrownBy(()->importer.importFile(file)).isInstanceOf(RuntimeException.class);
+   assertThat(jdbc.queryForObject("SELECT COUNT(*) FROM t_book",Integer.class)).isZero();
+  } finally { jdbc.execute("ALTER TABLE t_book DROP CONSTRAINT import_failure_test"); }
+ }
+ @Test void importRejectsEmptyMalformedOversizedAndWrongHeaders() throws Exception {
+  for(var file:List.of(
+   new org.springframework.mock.web.MockMultipartFile("file","empty.xlsx","application/octet-stream",new byte[0]),
+   new org.springframework.mock.web.MockMultipartFile("file","bad.xlsx","application/octet-stream",new byte[]{1,2,3}),
+   new org.springframework.mock.web.MockMultipartFile("file","huge.xlsx","application/octet-stream",new byte[5*1024*1024+1]),
+   new org.springframework.mock.web.MockMultipartFile("file","old.xls","application/octet-stream",new byte[]{1}),
+   new org.springframework.mock.web.MockMultipartFile("file","template.xlsx","application/octet-stream",new ClassPathResource("import/template.xlsx").getContentAsByteArray())))
+   assertThatThrownBy(()->importer.importFile(file)).isInstanceOf(BizException.class);
+  try(var wb=new org.apache.poi.xssf.usermodel.XSSFWorkbook(excel("表头").getInputStream());var out=new java.io.ByteArrayOutputStream()) {
+   wb.getSheetAt(0).getRow(0).getCell(0).setCellValue("错误表头"); wb.write(out);
+   var file=new org.springframework.mock.web.MockMultipartFile("file","bad.xlsx","application/octet-stream",out.toByteArray());
+   assertThatThrownBy(()->importer.importFile(file)).isInstanceOf(BizException.class).hasMessageContaining("表头");
+  }
+  assertThat(jdbc.queryForObject("SELECT COUNT(*) FROM t_book",Integer.class)).isZero();
+ }
+ @Test void importRejectsFormulaUnknownCategoryAndInvalidNumbers() throws Exception {
+  for(int col:List.of(2,5,7,11,12)) {
+   var file=excel("校验测试");
+   try(var wb=new org.apache.poi.xssf.usermodel.XSSFWorkbook(file.getInputStream());var out=new java.io.ByteArrayOutputStream()) {
+    var row=wb.getSheetAt(0).getRow(1);
+    var cell=row.getCell(col,org.apache.poi.ss.usermodel.Row.MissingCellPolicy.CREATE_NULL_AS_BLANK);
+    cell.setCellValue(col==12?"1.5":col==7?"2025-02-30":"不存在");
+    wb.write(out);
+    var invalid=new org.springframework.mock.web.MockMultipartFile("file","invalid.xlsx","application/octet-stream",out.toByteArray());
+    assertThatThrownBy(()->importer.importFile(invalid)).isInstanceOf(ResourceImportService.ImportException.class);
+   }
+  }
+  try(var wb=new org.apache.poi.xssf.usermodel.XSSFWorkbook(excel("公式").getInputStream());var out=new java.io.ByteArrayOutputStream()) {
+   wb.getSheetAt(0).getRow(1).getCell(11).setCellFormula("1+2"); wb.write(out);
+   var invalid=new org.springframework.mock.web.MockMultipartFile("file","formula.xlsx","application/octet-stream",out.toByteArray());
+   assertThatThrownBy(()->importer.importFile(invalid)).isInstanceOf(ResourceImportService.ImportException.class);
+  }
+  assertThat(jdbc.queryForObject("SELECT COUNT(*) FROM t_book",Integer.class)).isZero();
+ }
+ @Test void importRoutesEnforceAdminAndRenderErrors() throws Exception {
+  mvc.perform(get("/admin/books/import")).andExpect(status().is3xxRedirection());
+  mvc.perform(get("/admin/books/import").sessionAttr(AuthInterceptor.SESSION_KEY,reader)).andExpect(redirectedUrl("/admin/login"));
+  mvc.perform(multipart("/admin/books/import").file(excel("越权")).sessionAttr(AuthInterceptor.SESSION_KEY,reader)).andExpect(redirectedUrl("/admin/login"));
+  assertThat(page("/admin/books/import",admin)).contains("下载空白模板","开始导入");
+  mvc.perform(get("/admin/books/import/template").sessionAttr(AuthInterceptor.SESSION_KEY,admin)).andExpect(status().isOk()).andExpect(header().exists("Content-Disposition"));
+  mvc.perform(multipart("/admin/books/import").file(excel("")).sessionAttr(AuthInterceptor.SESSION_KEY,admin))
+   .andExpect(status().isOk()).andExpect(view().name("admin/book-import")).andExpect(model().attributeExists("importErrors"));
+  mvc.perform(multipart("/admin/books/import").file(excel("路由导入")).sessionAttr(AuthInterceptor.SESSION_KEY,admin))
+   .andExpect(status().is3xxRedirection()).andExpect(redirectedUrl("/admin/books"));
+ }
  @BeforeEach void reset() throws Exception {
   try(var c=ds.getConnection()) { assertThat(c.getMetaData().getURL()).startsWith("jdbc:h2:mem:catalog"); }
-  for(String table:List.of("t_reading_list_book","t_reading_list","t_book_category","t_cart_item","t_order_item","t_order","t_book","t_category","t_user","t_app_migration"))
+  for(String table:List.of("t_import_batch_book","t_import_batch","t_reading_list_book","t_reading_list","t_book_category","t_cart_item","t_order_item","t_order","t_book","t_category","t_user","t_app_migration"))
    jdbc.execute("DELETE FROM "+table);
   categories.initializeDefaults();
   admin=user("admin","ADMIN"); reader=user("reader","READER"); other=user("other","READER");
@@ -167,7 +331,7 @@ class CatalogFeatureTest {
  @Test void paginationKeepsFiltersAndShowsContinuousNumbers() throws Exception {
   for(int i=0;i<12;i++) book("分页书"+i,6);
   String html=page("/shop/books?keyword=测试作者&field=author&categoryId="+category()+"&sort=priceAsc&page=2",reader);
-  assertThat(html).contains("<td>9</td>","field=author","sort=priceAsc","categoryId="+category()).doesNotContain("<th>ID</th>");
+  assertThat(html).contains("<td>11</td>","field=author","sort=priceAsc","categoryId="+category()).doesNotContain("<th>ID</th>");
   assertThat(page("/admin/books?page=2",admin)).contains("<td>11</td>");
  }
  @Test void webRejectsForeignPrivateListsAndReaderWritesToPublic() throws Exception {
@@ -299,7 +463,7 @@ class CatalogFeatureTest {
   BookQuery bound=(BookQuery)result.getModelAndView().getModel().get("q");
   assertThat(bound.getCategoryIds()).containsExactly(category(),categories.list().getLast().getId());
   assertThat(bound.getLanguages()).containsExactly("外文"); assertThat(bound.getResourceTypes()).containsExactly("论文","期刊");
-  assertThat(result.getResponse().getContentAsString()).contains("<td>9</td>");
+  assertThat(result.getResponse().getContentAsString()).contains("<td>11</td>");
  }
  @Test void legacyRowsRemainBooksWithUnknownLanguageAfterRepeatedUpgrade() {
   Book b=new Book(); b.setTitle("历史图书"); b.setAuthor(""); b.setPrice(new BigDecimal("20")); b.setStock(2); bookMapper.insert(b);

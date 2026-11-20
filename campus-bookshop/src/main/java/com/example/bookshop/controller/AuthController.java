@@ -59,6 +59,7 @@ public class AuthController {
                 model.addAttribute("username", form.getUsername());
                 return "login";
             }
+            session.removeAttribute(AiRecommendationController.STATE);
             session.setAttribute(AuthInterceptor.SESSION_KEY,
                     new LoginUser(user.getId(), user.getUsername(), user.getRole()));
             return "redirect:/shop/books";
@@ -134,6 +135,7 @@ public class AuthController {
                 model.addAttribute("username", form.getUsername());
                 return "admin/login";
             }
+            session.removeAttribute(AiRecommendationController.STATE);
             session.setAttribute(AuthInterceptor.SESSION_KEY,
                     new LoginUser(user.getId(), user.getUsername(), user.getRole()));
             return "redirect:/admin/books";

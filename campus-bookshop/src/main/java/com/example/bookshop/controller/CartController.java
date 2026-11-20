@@ -55,10 +55,11 @@ public class CartController {
     }
 
     @Operation(summary = "加入购物车", description = "将指定图书加入购物车")
-    @ApiResponse(responseCode = "302", description = "操作后重定向回图书列表（成功提示「已加入购物车」，失败提示原因，如库存不足）")
+    @ApiResponse(responseCode = "302", description = "操作后返回资源浏览或 AI 推荐页，显示成功或失败提示")
     @PostMapping("/add")
     public String add(@Parameter(description = "图书ID") @RequestParam Long bookId, 
                      @Parameter(description = "购买数量，默认为1") @RequestParam(defaultValue = "1") Integer quantity,
+                     @RequestParam(defaultValue = "books") String source,
                      HttpSession session, RedirectAttributes ra) {
         LoginUser user = currentUser(session);
         try {
@@ -67,7 +68,7 @@ public class CartController {
         } catch (BizException e) {
             ra.addFlashAttribute("error", e.getMessage());
         }
-        return "redirect:/shop/books";
+        return "ai".equals(source) ? "redirect:/shop/ai" : "redirect:/shop/books";
     }
 
     @Operation(summary = "更新购物车商品数量", description = "更新购物车中指定商品的数量")

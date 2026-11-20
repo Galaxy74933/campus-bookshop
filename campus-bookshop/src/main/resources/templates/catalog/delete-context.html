@@ -1,0 +1,11 @@
+<!DOCTYPE html><html xmlns:th="http://www.thymeleaf.org"><body>
+<th:block th:fragment="context(q)">
+ <input type="hidden" name="page" th:value="${q.page}"><input type="hidden" name="size" th:value="${q.size}">
+ <input type="hidden" name="keyword" th:value="${q.keyword}"><input type="hidden" name="field" th:value="${q.field}">
+ <input type="hidden" name="sort" th:value="${q.sort}"><input type="hidden" name="stockStatus" th:value="${q.stockStatus}">
+ <input th:if="${q.categoryId != null}" type="hidden" name="categoryId" th:value="${q.categoryId}">
+ <input th:each="v : ${q.categoryIds}" type="hidden" name="categoryIds" th:value="${v}">
+ <input th:each="v : ${q.resourceTypes}" type="hidden" name="resourceTypes" th:value="${v}">
+ <input th:each="v : ${q.languages}" type="hidden" name="languages" th:value="${v}">
+ <input type="hidden" name="scrollY" value="0">
+</th:block></body></html>

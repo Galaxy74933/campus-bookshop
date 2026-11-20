@@ -1,6 +1,18 @@
 <!DOCTYPE html><html xmlns:th="http://www.thymeleaf.org"><body>
-<div th:fragment="pager(base,q,result)" class="pager" th:if="${result.totalPages > 1}">
- 第 <span th:text="${result.page}"></span> / <span th:text="${result.totalPages}"></span> 页
- <a th:if="${result.page > 1}" th:href="@{${base}(page=${result.page - 1},keyword=${q.keyword},field=${q.field},categoryId=${q.categoryId},categoryIds=${q.categoryIds},resourceTypes=${q.resourceTypes},languages=${q.languages},sort=${q.sort},stockStatus=${q.stockStatus})}">上一页</a>
- <a th:if="${result.page < result.totalPages}" th:href="@{${base}(page=${result.page + 1},keyword=${q.keyword},field=${q.field},categoryId=${q.categoryId},categoryIds=${q.categoryIds},resourceTypes=${q.resourceTypes},languages=${q.languages},sort=${q.sort},stockStatus=${q.stockStatus})}">下一页</a>
+<div th:fragment="pager(base,q,result)" class="pager">
+ <span>共 <span th:text="${result.total}"></span> 条</span>
+ <form th:action="@{${base}}" method="get" class="page-size-form">
+  <input type="hidden" name="page" value="1">
+  <input type="hidden" name="keyword" th:value="${q.keyword}"><input type="hidden" name="field" th:value="${q.field}">
+  <input type="hidden" name="sort" th:value="${q.sort}"><input type="hidden" name="stockStatus" th:value="${q.stockStatus}">
+  <input th:if="${q.categoryId != null}" type="hidden" name="categoryId" th:value="${q.categoryId}">
+  <input th:each="v : ${q.categoryIds}" type="hidden" name="categoryIds" th:value="${v}">
+  <input th:each="v : ${q.resourceTypes}" type="hidden" name="resourceTypes" th:value="${v}">
+  <input th:each="v : ${q.languages}" type="hidden" name="languages" th:value="${v}">
+  <label>每页 <select name="size" aria-label="每页条数" onchange="this.form.submit()"><option value="10" th:selected="${q.size == 10}">10</option><option value="20" th:selected="${q.size == 20}">20</option><option value="50" th:selected="${q.size == 50}">50</option></select> 条</label>
+  <noscript><button>应用</button></noscript>
+ </form>
+ 第 <span th:text="${result.page}"></span> / <span th:text="${result.totalPages > 0 ? result.totalPages : 1}"></span> 页
+ <a th:if="${result.page > 1}" th:href="@{${base}(page=${result.page - 1},size=${q.size},keyword=${q.keyword},field=${q.field},categoryId=${q.categoryId},categoryIds=${q.categoryIds},resourceTypes=${q.resourceTypes},languages=${q.languages},sort=${q.sort},stockStatus=${q.stockStatus})}">上一页</a>
+ <a th:if="${result.page < result.totalPages}" th:href="@{${base}(page=${result.page + 1},size=${q.size},keyword=${q.keyword},field=${q.field},categoryId=${q.categoryId},categoryIds=${q.categoryIds},resourceTypes=${q.resourceTypes},languages=${q.languages},sort=${q.sort},stockStatus=${q.stockStatus})}">下一页</a>
 </div></body></html>

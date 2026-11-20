@@ -11,7 +11,7 @@ public class ShopBookController {
     private final CategoryService categories;
     public ShopBookController(BookService books,CategoryService categories) { this.books=books; this.categories=categories; }
     @GetMapping("/books") public String list(@ModelAttribute("q") BookQuery q,Model model) {
-        model.addAttribute("pageResult",books.search(q,8,false)); model.addAttribute("categories",categories.list());
+        model.addAttribute("pageResult",books.search(q,q.getSize(),false)); model.addAttribute("categories",categories.list());
         model.addAttribute("admin",false); model.addAttribute("base","/shop/books");
         return "catalog/books";
     }

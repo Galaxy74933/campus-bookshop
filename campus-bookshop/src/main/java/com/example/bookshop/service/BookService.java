@@ -40,7 +40,7 @@ public class BookService {
         book.setCategoryIds(resources.categories(id));
         return book;
     }
-    private Book validated(BookForm f) {
+    Book validated(BookForm f) {
         var violations=validator.validate(f);
         if (!violations.isEmpty()) throw new BizException(violations.iterator().next().getMessage());
         categories.require(f.getCategoryId());
@@ -52,8 +52,9 @@ public class BookService {
         b.setPublisher(trim(f.getPublisher())); b.setPublishDate(f.getPublishDate()); b.setIdentifier(trim(f.getIdentifier())); b.setDescription(trim(f.getDescription()));
         b.setPrice(b.isPurchasable()?f.getPrice():java.math.BigDecimal.ZERO); b.setStock(b.isPurchasable()?f.getStock():0); return b;
     }
-    @Transactional public void create(BookForm f) {
+    @Transactional public Long create(BookForm f) {
         Book b=validated(f); books.insert(b); assign(b.getId(),f.getCategoryId()); saveMetadata(b,f);
+        return b.getId();
     }
     @Transactional public void update(Long id,BookForm f) {
         Book b=validated(f); findById(id); b.setId(id);
