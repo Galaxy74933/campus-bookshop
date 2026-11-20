@@ -1,17 +1,24 @@
-# This repository tracks only the campus-bookshop source project.
-/*
-!/.gitignore
-!/README.md
-!/campus-bookshop/
+# Maven build and logs
+/target/
+*.log
 
-# Keep source code and build configuration.
-/campus-bookshop/*
-!/campus-bookshop/.gitignore
-!/campus-bookshop/pom.xml
-!/campus-bookshop/src/
+# Editor settings
+.idea/
+.vscode/
+.settings/
+.zcode/
+*.iml
+.classpath
+.project
+.zcodeignore
 
-# Exclude generated files even if they appear below src.
-**/node_modules/
-**/target/
-**/*.log
-**/~$*
+# Local credentials and configuration
+.env
+.env.*
+!.env.example
+/src/main/resources/application-local.*
+
+# OS and Office temporary files
+.DS_Store
+Thumbs.db
+~$*

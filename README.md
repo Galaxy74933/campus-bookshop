@@ -4,7 +4,7 @@
 
 系统采用 B/S 架构，由 Thymeleaf 在服务端渲染中文页面，无需单独启动前端工程。
 
-源码位于 [`campus-bookshop/`](campus-bookshop/)。核心流程：**查找资源 → 查看详情 → 整理书单 → 加入购物车 → 余额支付 → 查看订单**。
+当前仓库根目录即 Maven 工程根目录，源码位于 [`src/`](src/)，构建配置为 [`pom.xml`](pom.xml)。核心流程：**查找资源 → 查看详情 → 整理书单 → 加入购物车 → 余额支付 → 查看订单**。
 
 ## 功能概览
 
@@ -37,6 +37,16 @@
 - 此功能只记录更新版本后成功导入的数据，不能追溯旧版本的导入。撤回后可再次上传原 Excel 进行演示。
 - 单条删除保留当前筛选、页码、每页数量与滚动位置；删空当前页时回到上一页（滚动恢复需要启用 JavaScript）。
 - 下载路径：`/admin/books/import/template`、`/admin/books/import/demo`，均需管理员登录。
+
+### 仓库内的演示文件
+
+[`demo/`](demo/) 提供可直接上传的 Excel 文件：
+
+- [资源导入空白模板](demo/资源导入空白模板.xlsx)：从第二行填写资源。
+- [资源导入演示数据1](demo/资源导入演示数据1.xlsx)：20 条演示资源，与网站下载的演示文件相同。
+- [资源导入演示数据2](demo/资源导入演示数据2.xlsx)：另一组 20 条演示资源。
+
+以管理员身份进入“资源管理 → Excel 导入”选择文件。建议每导入一组就演示一次撤回，再导入下一组；系统仅允许撤回本人最新批次。数据重复时会拒绝导入，不会覆盖已有资源。
 
 ## AI 选书助手（读者自带 API）
 
@@ -91,10 +101,9 @@ Spring Boot、Thymeleaf、MyBatis 和内嵌 Tomcat 由 Maven 自动下载，无�
 
 ### 1. 进入项目目录
 
-克隆或下载仓库后，在仓库根目录执行：
+克隆或下载仓库后，用 VS Code 打开包含 `pom.xml` 的项目根目录，在该目录的终端执行：
 
 ```bash
-cd campus-bookshop
 java -version
 javac -version
 mvn -version
@@ -122,7 +131,7 @@ CREATE DATABASE IF NOT EXISTS bookshop_zcode
 
 ### 3. 配置数据库连接
 
-基础配置位于 [`application.yml`](campus-bookshop/src/main/resources/application.yml)，默认连接本机 `3306` 端口的 `bookshop_zcode` 数据库。推荐用环境变量覆盖本机用户名和密码，避免将真实凭据写入提交的配置文件。
+基础配置位于 [`application.yml`](src/main/resources/application.yml)，默认连接本机 `3306` 端口的 `bookshop_zcode` 数据库。推荐用环境变量覆盖本机用户名和密码，避免将真实凭据写入提交的配置文件。
 
 在 **Windows PowerShell / VS Code PowerShell 终端**中执行：
 
@@ -234,9 +243,9 @@ java -jar target/bookshop-1.0.1.jar --bookshop.low-stock-threshold=10
 
 | 数据 | 来源 | 说明 |
 | --- | --- | --- |
-| 基础账号与 5 本图书 | [`db/data.sql`](campus-bookshop/src/main/resources/db/data.sql) | 按用户名或书名检查是否存在后补充 |
-| 12 条新增资源 | [`db/demo-resources.json`](campus-bookshop/src/main/resources/db/demo-resources.json) | 9 本图书，论文、期刊、报告各 1 条 |
-| 5 个学习书单 | [`db/demo-reading-lists.json`](campus-bookshop/src/main/resources/db/demo-reading-lists.json) | 3 个公开书单、2 个个人书单 |
+| 基础账号与 5 本图书 | [`db/data.sql`](src/main/resources/db/data.sql) | 按用户名或书名检查是否存在后补充 |
+| 12 条新增资源 | [`db/demo-resources.json`](src/main/resources/db/demo-resources.json) | 9 本图书，论文、期刊、报告各 1 条 |
+| 5 个学习书单 | [`db/demo-reading-lists.json`](src/main/resources/db/demo-reading-lists.json) | 3 个公开书单、2 个个人书单 |
 
 全新数据库首次启动后，正常情况下共 17 条资源。新增 12 条资源为虚构的课程演示数据，覆盖不同学科、语言和库存状态，不包含全文附件。
 
@@ -272,12 +281,15 @@ java -jar target/bookshop-1.0.1.jar --bookshop.low-stock-threshold=10
 | `t_import_batch` | Excel 导入批次、操作管理员、文件名、数量、导入及撤回时间 |
 | `t_import_batch_book` | 批次与本次新增资源的关联，用于精确撤回 |
 
-完整建表定义见 [`schema.sql`](campus-bookshop/src/main/resources/db/schema.sql) 和 [`catalog-schema.sql`](campus-bookshop/src/main/resources/db/catalog-schema.sql)。
+完整建表定义见 [`schema.sql`](src/main/resources/db/schema.sql) 和 [`catalog-schema.sql`](src/main/resources/db/catalog-schema.sql)。
 
 ## 工程结构
 
 ```text
 campus-bookshop/
+├── README.md             # 项目介绍与运行说明
+├── .gitignore            # 忽略构建产物与本地配置
+├── demo/                 # 空白模板及两组 Excel 演示数据
 ├── pom.xml
 ├── src/main/java/com/example/bookshop/
 │   ├── BookshopApplication.java
